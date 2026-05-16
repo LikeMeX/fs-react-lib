@@ -216,9 +216,24 @@ const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapte
         }
     }, [currentProfileStep, profileDraft, profileStepIdx]);
     const startProfileEdit = (0, react_1.useCallback)(() => {
+        // Pre-fill draft with existing profile so user reviews/edits current values
+        // instead of re-entering from scratch.
+        setProfileDraft(userProfile ?? {});
+        // Skip past already-filled steps; land on first blank or end-of-flow.
+        let idx = 0;
+        if (userProfile) {
+            for (idx = 0; idx < PROFILE_STEPS.length; idx++) {
+                if (!userProfile[PROFILE_STEPS[idx]]?.trim())
+                    break;
+            }
+        }
+        setProfileStepIdx(idx);
+        setProfileEditOpen(true);
+    }, [userProfile]);
+    const cancelProfileEdit = (0, react_1.useCallback)(() => {
+        setProfileEditOpen(false);
         setProfileDraft({});
         setProfileStepIdx(0);
-        setProfileEditOpen(true);
     }, []);
     // Watch surface: hand off most-recent enroll conversation into this surface
     (0, react_1.useEffect)(() => {
@@ -400,8 +415,8 @@ const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapte
                     react_1.default.createElement(antd_1.Tooltip, { title: "\u0E2A\u0E19\u0E17\u0E19\u0E32\u0E43\u0E2B\u0E21\u0E48" },
                         react_1.default.createElement("button", { type: "button", "aria-label": "\u0E40\u0E23\u0E34\u0E48\u0E21\u0E1A\u0E17\u0E2A\u0E19\u0E17\u0E19\u0E32\u0E43\u0E2B\u0E21\u0E48", onClick: handleNewConversation, className: "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-white/90 transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaryFS-400" },
                             react_1.default.createElement(LuMessageSquarePlus, { size: 20, "aria-hidden": true }))),
-                    react_1.default.createElement(antd_1.Tooltip, { title: "\u0E41\u0E01\u0E49\u0E44\u0E02\u0E42\u0E1B\u0E23\u0E44\u0E1F\u0E25\u0E4C\u0E1C\u0E39\u0E49\u0E40\u0E23\u0E35\u0E22\u0E19" },
-                        react_1.default.createElement("button", { type: "button", "aria-label": "\u0E41\u0E01\u0E49\u0E44\u0E02\u0E42\u0E1B\u0E23\u0E44\u0E1F\u0E25\u0E4C\u0E1C\u0E39\u0E49\u0E40\u0E23\u0E35\u0E22\u0E19", onClick: startProfileEdit, disabled: !profileLoaded || !profileComplete, className: "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-white/90 transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaryFS-400 disabled:opacity-40" },
+                    react_1.default.createElement(antd_1.Tooltip, { title: profileEditOpen ? 'กลับไปสนทนา' : 'แก้ไขโปรไฟล์ผู้เรียน' },
+                        react_1.default.createElement("button", { type: "button", "aria-label": profileEditOpen ? 'กลับไปสนทนา' : 'แก้ไขโปรไฟล์ผู้เรียน', onClick: profileEditOpen ? cancelProfileEdit : startProfileEdit, disabled: !profileLoaded || !profileComplete, className: "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-white/90 transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaryFS-400 disabled:opacity-40" },
                             react_1.default.createElement(LuUserCog, { size: 20, "aria-hidden": true }))),
                     react_1.default.createElement(antd_1.Tooltip, { title: fullPage ? 'โหมดแผงข้าง' : 'โหมดเต็มหน้าจอ' },
                         react_1.default.createElement("button", { type: "button", "aria-label": fullPage ? 'ย่อแผงผู้ช่วย' : 'ขยายแผงผู้ช่วยเต็มหน้าจอ', onClick: toggleFullPage, className: "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-white/90 transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaryFS-400" }, fullPage ? react_1.default.createElement(LuMinimize2, { size: 20, "aria-hidden": true }) : react_1.default.createElement(LuMaximize2, { size: 20, "aria-hidden": true })))),

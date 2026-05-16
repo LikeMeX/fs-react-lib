@@ -277,9 +277,24 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
     );
 
     const startProfileEdit = useCallback(() => {
+        // Pre-fill draft with existing profile so user reviews/edits current values
+        // instead of re-entering from scratch.
+        setProfileDraft(userProfile ?? {});
+        // Skip past already-filled steps; land on first blank or end-of-flow.
+        let idx = 0;
+        if (userProfile) {
+            for (idx = 0; idx < PROFILE_STEPS.length; idx++) {
+                if (!userProfile[PROFILE_STEPS[idx]]?.trim()) break;
+            }
+        }
+        setProfileStepIdx(idx);
+        setProfileEditOpen(true);
+    }, [userProfile]);
+
+    const cancelProfileEdit = useCallback(() => {
+        setProfileEditOpen(false);
         setProfileDraft({});
         setProfileStepIdx(0);
-        setProfileEditOpen(true);
     }, []);
 
     // Watch surface: hand off most-recent enroll conversation into this surface
@@ -498,11 +513,11 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
                                 <LuMessageSquarePlus size={20} aria-hidden />
                             </button>
                         </Tooltip>
-                        <Tooltip title="แก้ไขโปรไฟล์ผู้เรียน">
+                        <Tooltip title={profileEditOpen ? 'กลับไปสนทนา' : 'แก้ไขโปรไฟล์ผู้เรียน'}>
                             <button
                                 type="button"
-                                aria-label="แก้ไขโปรไฟล์ผู้เรียน"
-                                onClick={startProfileEdit}
+                                aria-label={profileEditOpen ? 'กลับไปสนทนา' : 'แก้ไขโปรไฟล์ผู้เรียน'}
+                                onClick={profileEditOpen ? cancelProfileEdit : startProfileEdit}
                                 disabled={!profileLoaded || !profileComplete}
                                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-white/90 transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaryFS-400 disabled:opacity-40">
                                 <LuUserCog size={20} aria-hidden />
