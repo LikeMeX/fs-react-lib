@@ -133,4 +133,3 @@ const SuggestedActions = ({ mode, actions, disabled, onSelect }) => {
         }))));
 };
 exports.SuggestedActions = SuggestedActions;
-//# sourceMappingURL=SuggestedActions.js.map

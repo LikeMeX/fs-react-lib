@@ -19,4 +19,3 @@ export { sanitizeAssistantMarkdown, visibleStripped, isOrphanListMarkerLine } fr
 export * from './types/learningAssistant';
 export { createFsAiProxyHandler } from './api-proxy/handler';
 export type { CreateFsAiProxyHandlerOptions } from './api-proxy/handler';
-//# sourceMappingURL=index.d.ts.map

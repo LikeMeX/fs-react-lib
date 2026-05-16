@@ -25,4 +25,3 @@ function isFsAiApiConfigured() {
     }
     return !!process.env.NEXT_PUBLIC_FS_AI_API_URL?.trim();
 }
-//# sourceMappingURL=canUseLearningAssistant.js.map

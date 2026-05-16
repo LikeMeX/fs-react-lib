@@ -10,4 +10,3 @@ export declare function useAssistantStream(): {
     abort: () => void;
     reset: () => void;
 };
-//# sourceMappingURL=useAssistantStream.d.ts.map

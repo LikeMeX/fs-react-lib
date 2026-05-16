@@ -5,4 +5,3 @@ import { AssistantUserMember } from '../types/learningAssistant';
  */
 export declare function canUseLearningAssistant(userMember?: AssistantUserMember): boolean;
 export declare function isFsAiApiConfigured(): boolean;
-//# sourceMappingURL=canUseLearningAssistant.d.ts.map

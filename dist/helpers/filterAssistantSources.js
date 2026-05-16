@@ -11,4 +11,3 @@ function filterDisplayableAssistantSources(sources) {
     });
     return out.length ? out : undefined;
 }
-//# sourceMappingURL=filterAssistantSources.js.map

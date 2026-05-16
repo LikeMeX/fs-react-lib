@@ -23,4 +23,3 @@ const AssistantNavButton = ({ userMember, canUse, floating }) => {
         react_1.default.createElement("span", { key: open ? 'close' : 'chat', "aria-hidden": true, className: "relative z-10" }, open ? react_1.default.createElement(LuX, { size: floating ? 22 : 18, strokeWidth: 2.4 }) : react_1.default.createElement(LuBot, { size: floating ? 22 : 18, strokeWidth: 2.4 }))));
 };
 exports.AssistantNavButton = AssistantNavButton;
-//# sourceMappingURL=AssistantNavButton.js.map

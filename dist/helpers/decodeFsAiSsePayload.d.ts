@@ -4,4 +4,3 @@
  */
 export declare function extractTextFromStreamJson(parsed: unknown): string;
 export declare function decodeSseDataPayload(raw: string): string;
-//# sourceMappingURL=decodeFsAiSsePayload.d.ts.map

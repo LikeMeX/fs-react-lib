@@ -60,4 +60,3 @@ function sanitizeAssistantMarkdown(text) {
         .replace(/\n{3,}/g, '\n\n')
         .trimEnd();
 }
-//# sourceMappingURL=sanitizeAssistantMarkdown.js.map

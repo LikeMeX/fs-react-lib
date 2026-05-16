@@ -46,4 +46,3 @@ const MessageList = ({ messages }) => {
         react_1.default.createElement("div", { ref: bottomRef })));
 };
 exports.MessageList = MessageList;
-//# sourceMappingURL=MessageList.js.map

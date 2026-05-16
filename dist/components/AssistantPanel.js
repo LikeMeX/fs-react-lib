@@ -481,4 +481,3 @@ const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapte
                 })))))));
 };
 exports.AssistantPanel = AssistantPanel;
-//# sourceMappingURL=AssistantPanel.js.map

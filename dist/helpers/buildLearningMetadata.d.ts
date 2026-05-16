@@ -14,4 +14,3 @@ export interface BuildLearningMetadataInput {
     profileOverride?: AssistantUserProfile | null;
 }
 export declare function buildLearningMetadata(input: BuildLearningMetadataInput): LearningMetadata;
-//# sourceMappingURL=buildLearningMetadata.d.ts.map

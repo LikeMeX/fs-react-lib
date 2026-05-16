@@ -54,4 +54,3 @@ function useAssistantPhase(args) {
     }, [chapterId, conversationId, courseId, enabled, lessonId, mode]);
     return { phase, apiMode: mode, lastError };
 }
-//# sourceMappingURL=useAssistantPhase.js.map

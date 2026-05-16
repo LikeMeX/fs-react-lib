@@ -41,4 +41,3 @@ const WelcomeMessage = ({ mode }) => {
         react_1.default.createElement("p", { className: "m-0 max-w-[34ch] text-sm leading-relaxed text-blackFS-200" }, content.description)));
 };
 exports.WelcomeMessage = WelcomeMessage;
-//# sourceMappingURL=WelcomeMessage.js.map

@@ -62,4 +62,3 @@ function isAssistantUserProfileComplete(profile) {
         return typeof v === 'string' && v.trim().length > 0;
     });
 }
-//# sourceMappingURL=assistantUserProfile.js.map

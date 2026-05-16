@@ -71,4 +71,3 @@ const MessageBubble = ({ message }) => {
         displaySources.length > 0 && (react_1.default.createElement("ul", { className: "mt-2 list-disc pl-4 text-xs opacity-80" }, displaySources.map((s, i) => (react_1.default.createElement("li", { key: i }, s.url ? (react_1.default.createElement("a", { href: s.url, target: "_blank", rel: "noopener noreferrer", className: "underline" }, s.title || s.url)) : (s.title))))))));
 };
 exports.MessageBubble = MessageBubble;
-//# sourceMappingURL=MessageBubble.js.map

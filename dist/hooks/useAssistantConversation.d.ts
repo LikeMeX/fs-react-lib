@@ -110,4 +110,3 @@ export declare function useAssistantConversation(courseId: number | null, initia
     remove: () => void;
     fetchStatus: import("@tanstack/react-query").FetchStatus;
 };
-//# sourceMappingURL=useAssistantConversation.d.ts.map

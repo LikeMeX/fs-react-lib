@@ -8,4 +8,3 @@ export interface AssistantNavButtonProps {
     floating?: boolean;
 }
 export declare const AssistantNavButton: React.FC<AssistantNavButtonProps>;
-//# sourceMappingURL=AssistantNavButton.d.ts.map

@@ -26,4 +26,3 @@ function useAssistantConversation(courseId, initialMode, enabled, options) {
         isError: pinned ? false : query.isError,
     };
 }
-//# sourceMappingURL=useAssistantConversation.js.map

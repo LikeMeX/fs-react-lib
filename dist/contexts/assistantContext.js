@@ -82,4 +82,3 @@ exports.AssistantContextProvider = AssistantContextProvider;
 const useAssistant = () => (0, react_1.useContext)(exports.AssistantContext);
 exports.useAssistant = useAssistant;
 exports.default = exports.AssistantContextProvider;
-//# sourceMappingURL=assistantContext.js.map

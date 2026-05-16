@@ -19,4 +19,3 @@ export interface AssistantPanelProps {
     getVideoTimestamp?: () => number;
 }
 export declare const AssistantPanel: React.FC<AssistantPanelProps>;
-//# sourceMappingURL=AssistantPanel.d.ts.map

@@ -16,4 +16,3 @@ export declare function useAssistantPhase(args: UseAssistantPhaseArgs): {
     apiMode: LearningModeApi;
     lastError: string;
 };
-//# sourceMappingURL=useAssistantPhase.d.ts.map

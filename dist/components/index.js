@@ -21,4 +21,3 @@ Object.defineProperty(exports, "WelcomeMessage", { enumerable: true, get: functi
 var constants_1 = require("./constants");
 Object.defineProperty(exports, "ASSISTANT_PANEL_WIDTH", { enumerable: true, get: function () { return constants_1.ASSISTANT_PANEL_WIDTH; } });
 Object.defineProperty(exports, "ASSISTANT_PANEL_WIDTH_FULL_VW", { enumerable: true, get: function () { return constants_1.ASSISTANT_PANEL_WIDTH_FULL_VW; } });
-//# sourceMappingURL=index.js.map

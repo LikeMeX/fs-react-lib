@@ -7,4 +7,3 @@ export interface ComposerProps {
     placeholder?: string;
 }
 export declare const Composer: React.FC<ComposerProps>;
-//# sourceMappingURL=Composer.d.ts.map

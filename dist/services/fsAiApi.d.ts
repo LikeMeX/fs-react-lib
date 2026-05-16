@@ -9,4 +9,3 @@ export declare const fsAiApi: {
     streamMessagesUrl(conversationId: string): string;
     buildStreamInit(_conversationId: string, body: SendStreamBody): RequestInit;
 };
-//# sourceMappingURL=fsAiApi.d.ts.map

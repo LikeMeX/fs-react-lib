@@ -157,4 +157,3 @@ function useAssistantStream() {
     }, [abort]);
     return { messages, setMessages, suggestedActions, streaming, error, send, abort, reset };
 }
-//# sourceMappingURL=useAssistantStream.js.map

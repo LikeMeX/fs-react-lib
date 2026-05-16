@@ -19,4 +19,3 @@ export declare function upsertAssistantConversation(entry: {
 export declare function removeAssistantConversation(id: string): void;
 export declare function readAssistantFullPagePreference(): boolean;
 export declare function writeAssistantFullPagePreference(value: boolean): void;
-//# sourceMappingURL=assistantConversationHistory.d.ts.map

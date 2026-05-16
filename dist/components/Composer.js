@@ -62,4 +62,3 @@ const Composer = ({ disabled, loading, onSend, onAttach, placeholder = 'Type you
             react_1.default.createElement("button", { type: "button", "aria-label": "\u0E2A\u0E48\u0E07", disabled: !canSend, onClick: submit, className: "flex h-8 w-8 items-center justify-center rounded-full bg-primaryFS-500 text-white transition hover:bg-primaryFS-400 disabled:cursor-not-allowed disabled:opacity-40" }, loading ? react_1.default.createElement(LuLoader, { size: 16, className: "animate-spin" }) : react_1.default.createElement(LuArrowUp, { size: 16 })))));
 };
 exports.Composer = Composer;
-//# sourceMappingURL=Composer.js.map

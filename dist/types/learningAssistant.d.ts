@@ -86,4 +86,3 @@ export interface ConversationOut {
 }
 /** Opaque user-token type. Apps may pass their own decoded JWT object. */
 export type AssistantUserMember = Record<string, unknown> | null | undefined;
-//# sourceMappingURL=learningAssistant.d.ts.map

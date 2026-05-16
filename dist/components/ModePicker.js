@@ -29,4 +29,3 @@ const ModePicker = ({ onSelect, disabled, modes }) => {
             react_1.default.createElement("span", null, m.label)))))));
 };
 exports.ModePicker = ModePicker;
-//# sourceMappingURL=ModePicker.js.map

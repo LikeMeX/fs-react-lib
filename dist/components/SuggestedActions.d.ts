@@ -10,4 +10,3 @@ export interface SuggestedActionsProps {
     onSelect: (message: string, actionIntent: string) => void;
 }
 export declare const SuggestedActions: React.FC<SuggestedActionsProps>;
-//# sourceMappingURL=SuggestedActions.d.ts.map

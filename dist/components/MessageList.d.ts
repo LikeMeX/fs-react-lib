@@ -4,4 +4,3 @@ export interface MessageListProps {
     messages: AssistantMessage[];
 }
 export declare const MessageList: React.FC<MessageListProps>;
-//# sourceMappingURL=MessageList.d.ts.map

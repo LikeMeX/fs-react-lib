@@ -7,4 +7,3 @@ export interface ModePickerProps {
     modes?: LearningModeApi[];
 }
 export declare const ModePicker: React.FC<ModePickerProps>;
-//# sourceMappingURL=ModePicker.d.ts.map
