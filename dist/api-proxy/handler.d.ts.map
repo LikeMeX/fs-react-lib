@@ -1,0 +1,1 @@
+{"version":3,"file":"handler.d.ts","sourceRoot":"","sources":["../../src/api-proxy/handler.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,cAAc,EAAE,eAAe,EAAE,MAAM,MAAM,CAAC;AAG5D,MAAM,WAAW,6BAA6B;IAC1C,6HAA6H;IAC7H,WAAW,CAAC,EAAE,MAAM,CAAC;IACrB,4EAA4E;IAC5E,MAAM,CAAC,EAAE,MAAM,CAAC;CACnB;AAgCD,wBAAgB,sBAAsB,CAAC,IAAI,GAAE,6BAAkC,IAC7C,KAAK,cAAc,EAAE,KAAK,eAAe,mBAuG1E"}

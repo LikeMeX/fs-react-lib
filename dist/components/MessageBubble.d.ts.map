@@ -1,0 +1,1 @@
+{"version":3,"file":"MessageBubble.d.ts","sourceRoot":"","sources":["../../src/components/MessageBubble.tsx"],"names":[],"mappings":"AAAA,OAAO,KAAK,MAAM,OAAO,CAAC;AAK1B,OAAO,EAAE,gBAAgB,EAAE,MAAM,4BAA4B,CAAC;AAQ9D,MAAM,WAAW,kBAAkB;IAC/B,OAAO,EAAE,gBAAgB,CAAC;CAC7B;AAqED,eAAO,MAAM,aAAa,EAAE,KAAK,CAAC,EAAE,CAAC,kBAAkB,CAgCtD,CAAC"}

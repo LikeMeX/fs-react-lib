@@ -1,0 +1,65 @@
+"use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __exportStar = (this && this.__exportStar) || function(m, exports) {
+    for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.createFsAiProxyHandler = exports.isOrphanListMarkerLine = exports.visibleStripped = exports.sanitizeAssistantMarkdown = exports.filterDisplayableAssistantSources = exports.extractTextFromStreamJson = exports.decodeSseDataPayload = exports.isAssistantUserProfileComplete = exports.clearAssistantUserProfile = exports.writeAssistantUserProfile = exports.readAssistantUserProfile = exports.ASSISTANT_FULL_PAGE_STORAGE_KEY = exports.ASSISTANT_HISTORY_STORAGE_KEY = exports.writeAssistantFullPagePreference = exports.readAssistantFullPagePreference = exports.removeAssistantConversation = exports.upsertAssistantConversation = exports.listAssistantConversations = exports.buildLearningMetadata = exports.isFsAiApiConfigured = exports.canUseLearningAssistant = exports.useAssistantStream = exports.useAssistantPhase = exports.useAssistantConversation = exports.fsAiApi = exports.configureFsAi = exports.useAssistant = exports.AssistantContext = exports.AssistantContextProvider = void 0;
+__exportStar(require("./components"), exports);
+var assistantContext_1 = require("./contexts/assistantContext");
+Object.defineProperty(exports, "AssistantContextProvider", { enumerable: true, get: function () { return __importDefault(assistantContext_1).default; } });
+Object.defineProperty(exports, "AssistantContext", { enumerable: true, get: function () { return assistantContext_1.AssistantContext; } });
+Object.defineProperty(exports, "useAssistant", { enumerable: true, get: function () { return assistantContext_1.useAssistant; } });
+var fsAiApi_1 = require("./services/fsAiApi");
+Object.defineProperty(exports, "configureFsAi", { enumerable: true, get: function () { return fsAiApi_1.configureFsAi; } });
+Object.defineProperty(exports, "fsAiApi", { enumerable: true, get: function () { return fsAiApi_1.fsAiApi; } });
+var useAssistantConversation_1 = require("./hooks/useAssistantConversation");
+Object.defineProperty(exports, "useAssistantConversation", { enumerable: true, get: function () { return useAssistantConversation_1.useAssistantConversation; } });
+var useAssistantPhase_1 = require("./hooks/useAssistantPhase");
+Object.defineProperty(exports, "useAssistantPhase", { enumerable: true, get: function () { return useAssistantPhase_1.useAssistantPhase; } });
+var useAssistantStream_1 = require("./hooks/useAssistantStream");
+Object.defineProperty(exports, "useAssistantStream", { enumerable: true, get: function () { return useAssistantStream_1.useAssistantStream; } });
+var canUseLearningAssistant_1 = require("./helpers/canUseLearningAssistant");
+Object.defineProperty(exports, "canUseLearningAssistant", { enumerable: true, get: function () { return canUseLearningAssistant_1.canUseLearningAssistant; } });
+Object.defineProperty(exports, "isFsAiApiConfigured", { enumerable: true, get: function () { return canUseLearningAssistant_1.isFsAiApiConfigured; } });
+var buildLearningMetadata_1 = require("./helpers/buildLearningMetadata");
+Object.defineProperty(exports, "buildLearningMetadata", { enumerable: true, get: function () { return buildLearningMetadata_1.buildLearningMetadata; } });
+var assistantConversationHistory_1 = require("./helpers/assistantConversationHistory");
+Object.defineProperty(exports, "listAssistantConversations", { enumerable: true, get: function () { return assistantConversationHistory_1.listAssistantConversations; } });
+Object.defineProperty(exports, "upsertAssistantConversation", { enumerable: true, get: function () { return assistantConversationHistory_1.upsertAssistantConversation; } });
+Object.defineProperty(exports, "removeAssistantConversation", { enumerable: true, get: function () { return assistantConversationHistory_1.removeAssistantConversation; } });
+Object.defineProperty(exports, "readAssistantFullPagePreference", { enumerable: true, get: function () { return assistantConversationHistory_1.readAssistantFullPagePreference; } });
+Object.defineProperty(exports, "writeAssistantFullPagePreference", { enumerable: true, get: function () { return assistantConversationHistory_1.writeAssistantFullPagePreference; } });
+Object.defineProperty(exports, "ASSISTANT_HISTORY_STORAGE_KEY", { enumerable: true, get: function () { return assistantConversationHistory_1.ASSISTANT_HISTORY_STORAGE_KEY; } });
+Object.defineProperty(exports, "ASSISTANT_FULL_PAGE_STORAGE_KEY", { enumerable: true, get: function () { return assistantConversationHistory_1.ASSISTANT_FULL_PAGE_STORAGE_KEY; } });
+var assistantUserProfile_1 = require("./helpers/assistantUserProfile");
+Object.defineProperty(exports, "readAssistantUserProfile", { enumerable: true, get: function () { return assistantUserProfile_1.readAssistantUserProfile; } });
+Object.defineProperty(exports, "writeAssistantUserProfile", { enumerable: true, get: function () { return assistantUserProfile_1.writeAssistantUserProfile; } });
+Object.defineProperty(exports, "clearAssistantUserProfile", { enumerable: true, get: function () { return assistantUserProfile_1.clearAssistantUserProfile; } });
+Object.defineProperty(exports, "isAssistantUserProfileComplete", { enumerable: true, get: function () { return assistantUserProfile_1.isAssistantUserProfileComplete; } });
+var decodeFsAiSsePayload_1 = require("./helpers/decodeFsAiSsePayload");
+Object.defineProperty(exports, "decodeSseDataPayload", { enumerable: true, get: function () { return decodeFsAiSsePayload_1.decodeSseDataPayload; } });
+Object.defineProperty(exports, "extractTextFromStreamJson", { enumerable: true, get: function () { return decodeFsAiSsePayload_1.extractTextFromStreamJson; } });
+var filterAssistantSources_1 = require("./helpers/filterAssistantSources");
+Object.defineProperty(exports, "filterDisplayableAssistantSources", { enumerable: true, get: function () { return filterAssistantSources_1.filterDisplayableAssistantSources; } });
+var sanitizeAssistantMarkdown_1 = require("./helpers/sanitizeAssistantMarkdown");
+Object.defineProperty(exports, "sanitizeAssistantMarkdown", { enumerable: true, get: function () { return sanitizeAssistantMarkdown_1.sanitizeAssistantMarkdown; } });
+Object.defineProperty(exports, "visibleStripped", { enumerable: true, get: function () { return sanitizeAssistantMarkdown_1.visibleStripped; } });
+Object.defineProperty(exports, "isOrphanListMarkerLine", { enumerable: true, get: function () { return sanitizeAssistantMarkdown_1.isOrphanListMarkerLine; } });
+__exportStar(require("./types/learningAssistant"), exports);
+var handler_1 = require("./api-proxy/handler");
+Object.defineProperty(exports, "createFsAiProxyHandler", { enumerable: true, get: function () { return handler_1.createFsAiProxyHandler; } });
+//# sourceMappingURL=index.js.map
