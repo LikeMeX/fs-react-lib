@@ -48,6 +48,7 @@ const LuMinimize2 = lu_1.LuMinimize2;
 const LuSearch = lu_1.LuSearch;
 const LuTrash2 = lu_1.LuTrash2;
 const LuUserCog = lu_1.LuUserCog;
+const LuX = lu_1.LuX;
 const LuMoreVertical = props => (react_1.default.createElement("svg", { xmlns: "http://www.w3.org/2000/svg", width: props.size ?? 18, height: props.size ?? 18, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round", className: props.className, "aria-hidden": props['aria-hidden'] ? 'true' : undefined },
     react_1.default.createElement("circle", { cx: "12", cy: "5", r: "1" }),
     react_1.default.createElement("circle", { cx: "12", cy: "12", r: "1" }),
@@ -116,7 +117,7 @@ function initialModeFor(surface, modes) {
     return modes[0] ?? 'general';
 }
 const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapterId, lessonComplete = false, courseComplete = false, modes, userMember, canUse, getVideoTimestamp, }) => {
-    const { open } = (0, assistantContext_1.useAssistant)();
+    const { open, setOpen } = (0, assistantContext_1.useAssistant)();
     const allowedModes = modes && modes.length ? modes : DEFAULT_MODES;
     const singleMode = allowedModes.length === 1;
     const initialMode = initialModeFor(surface, allowedModes);
@@ -419,7 +420,10 @@ const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapte
                         react_1.default.createElement("button", { type: "button", "aria-label": profileEditOpen ? 'กลับไปสนทนา' : 'แก้ไขโปรไฟล์ผู้เรียน', onClick: profileEditOpen ? cancelProfileEdit : startProfileEdit, disabled: !profileLoaded || !profileComplete, className: "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-white/90 transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaryFS-400 disabled:opacity-40" },
                             react_1.default.createElement(LuUserCog, { size: 20, "aria-hidden": true }))),
                     react_1.default.createElement(antd_1.Tooltip, { title: fullPage ? 'โหมดแผงข้าง' : 'โหมดเต็มหน้าจอ' },
-                        react_1.default.createElement("button", { type: "button", "aria-label": fullPage ? 'ย่อแผงผู้ช่วย' : 'ขยายแผงผู้ช่วยเต็มหน้าจอ', onClick: toggleFullPage, className: "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-white/90 transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaryFS-400" }, fullPage ? react_1.default.createElement(LuMinimize2, { size: 20, "aria-hidden": true }) : react_1.default.createElement(LuMaximize2, { size: 20, "aria-hidden": true })))),
+                        react_1.default.createElement("button", { type: "button", "aria-label": fullPage ? 'ย่อแผงผู้ช่วย' : 'ขยายแผงผู้ช่วยเต็มหน้าจอ', onClick: toggleFullPage, className: "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-white/90 transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaryFS-400" }, fullPage ? react_1.default.createElement(LuMinimize2, { size: 20, "aria-hidden": true }) : react_1.default.createElement(LuMaximize2, { size: 20, "aria-hidden": true }))),
+                    react_1.default.createElement(antd_1.Tooltip, { title: "\u0E1B\u0E34\u0E14\u0E1C\u0E39\u0E49\u0E0A\u0E48\u0E27\u0E22" },
+                        react_1.default.createElement("button", { type: "button", "aria-label": "\u0E1B\u0E34\u0E14\u0E1C\u0E39\u0E49\u0E0A\u0E48\u0E27\u0E22\u0E01\u0E32\u0E23\u0E40\u0E23\u0E35\u0E22\u0E19", onClick: () => setOpen(false), className: "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-white/90 transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaryFS-400" },
+                            react_1.default.createElement(LuX, { size: 20, "aria-hidden": true })))),
                 lastError === 'FORBIDDEN' && (react_1.default.createElement(antd_1.Alert, { type: "error", message: "\u0E44\u0E21\u0E48\u0E21\u0E35\u0E2A\u0E34\u0E17\u0E18\u0E34\u0E4C\u0E43\u0E0A\u0E49\u0E07\u0E32\u0E19\u0E1C\u0E39\u0E49\u0E0A\u0E48\u0E27\u0E22", className: "mb-3", showIcon: true })),
                 convQuery.isError && (react_1.default.createElement(antd_1.Alert, { type: "error", message: "\u0E44\u0E21\u0E48\u0E2A\u0E32\u0E21\u0E32\u0E23\u0E16\u0E2A\u0E23\u0E49\u0E32\u0E07\u0E1A\u0E17\u0E2A\u0E19\u0E17\u0E19\u0E32\u0E44\u0E14\u0E49", className: "mb-3", showIcon: true })),
                 streamError && (react_1.default.createElement(antd_1.Alert, { type: "error", message: streamError, className: "mb-3", showIcon: true, closable: true })),

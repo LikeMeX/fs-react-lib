@@ -9,6 +9,7 @@ import {
     LuSearch as LuSearchRaw,
     LuTrash2 as LuTrash2Raw,
     LuUserCog as LuUserCogRaw,
+    LuX as LuXRaw,
 } from 'react-icons/lu';
 
 type IconFC = React.FC<{ size?: number; className?: string; 'aria-hidden'?: boolean }>;
@@ -20,6 +21,7 @@ const LuMinimize2 = LuMinimize2Raw as unknown as IconFC;
 const LuSearch = LuSearchRaw as unknown as IconFC;
 const LuTrash2 = LuTrash2Raw as unknown as IconFC;
 const LuUserCog = LuUserCogRaw as unknown as IconFC;
+const LuX = LuXRaw as unknown as IconFC;
 const LuMoreVertical: IconFC = props => (
     <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -158,7 +160,7 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
     canUse,
     getVideoTimestamp,
 }) => {
-    const { open } = useAssistant();
+    const { open, setOpen } = useAssistant();
     const allowedModes = modes && modes.length ? modes : DEFAULT_MODES;
     const singleMode = allowedModes.length === 1;
     const initialMode = initialModeFor(surface, allowedModes);
@@ -530,6 +532,15 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
                                 onClick={toggleFullPage}
                                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-white/90 transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaryFS-400">
                                 {fullPage ? <LuMinimize2 size={20} aria-hidden /> : <LuMaximize2 size={20} aria-hidden />}
+                            </button>
+                        </Tooltip>
+                        <Tooltip title="ปิดผู้ช่วย">
+                            <button
+                                type="button"
+                                aria-label="ปิดผู้ช่วยการเรียน"
+                                onClick={() => setOpen(false)}
+                                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-white/90 transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaryFS-400">
+                                <LuX size={20} aria-hidden />
                             </button>
                         </Tooltip>
                     </header>

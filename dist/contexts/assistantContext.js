@@ -48,10 +48,10 @@ const AssistantContextProvider = ({ children }) => {
             return;
         try {
             const v = window.localStorage.getItem(OPEN_PREF_KEY);
-            setOpenState(v === null ? true : v === 'true');
+            setOpenState(v === 'true');
         }
         catch {
-            setOpenState(true);
+            setOpenState(false);
         }
     }, []);
     const persist = (0, react_1.useCallback)((next) => {

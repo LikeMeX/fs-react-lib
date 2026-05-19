@@ -21,9 +21,9 @@ export const AssistantContextProvider: React.FC<PropsWithChildren<unknown>> = ({
         if (typeof window === 'undefined') return;
         try {
             const v = window.localStorage.getItem(OPEN_PREF_KEY);
-            setOpenState(v === null ? true : v === 'true');
+            setOpenState(v === 'true');
         } catch {
-            setOpenState(true);
+            setOpenState(false);
         }
     }, []);
 

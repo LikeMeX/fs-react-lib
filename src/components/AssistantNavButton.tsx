@@ -24,6 +24,7 @@ export const AssistantNavButton: React.FC<AssistantNavButtonProps> = ({ userMemb
     const allowed = canUse ?? canUseLearningAssistant(userMember);
 
     if (!allowed || !isFsAiApiConfigured()) return null;
+    if (open && floating) return null;
 
     const wrapperClass = floating
         ? 'fixed bottom-5 right-5 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-primaryFS-400 via-primaryFS-500 to-pinkFS-500 text-white shadow-[0_12px_30px_rgba(132,44,221,0.45)] ring-[3px] ring-black/20 transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-[0_16px_36px_rgba(132,44,221,0.5)] active:translate-y-0 active:scale-95'
