@@ -1,6 +1,8 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
 import { sanitizeAssistantMarkdown, visibleStripped } from '../helpers/sanitizeAssistantMarkdown';
 import { filterDisplayableAssistantSources } from '../helpers/filterAssistantSources';
 import { AssistantMessage } from '../types/learningAssistant';
@@ -92,7 +94,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
                 <div className="whitespace-pre-wrap">{message.content}</div>
             ) : (
                 <ReactMarkdown
-                    remarkPlugins={[remarkGfm, pruneEmptyListItems]}
+                    remarkPlugins={[remarkGfm, remarkMath, pruneEmptyListItems]}
+                    rehypePlugins={[rehypeKatex]}
                     components={markdownComponents}>
                     {sanitizeAssistantMarkdown(message.content)}
                 </ReactMarkdown>
