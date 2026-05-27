@@ -2,6 +2,8 @@ export { AssistantPanel } from './AssistantPanel';
 export type { AssistantPanelProps } from './AssistantPanel';
 export { AssistantNavButton } from './AssistantNavButton';
 export type { AssistantNavButtonProps } from './AssistantNavButton';
+export { LearningAssistantShell } from './LearningAssistantShell';
+export type { LearningAssistantShellProps } from './LearningAssistantShell';
 export { SuggestedActions, SUGGESTED_ACTIONS_BY_MODE } from './SuggestedActions';
 export { MessageBubble } from './MessageBubble';
 export { MessageList } from './MessageList';

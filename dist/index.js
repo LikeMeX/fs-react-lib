@@ -17,7 +17,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createFsAiProxyHandler = exports.isOrphanListMarkerLine = exports.visibleStripped = exports.sanitizeAssistantMarkdown = exports.filterDisplayableAssistantSources = exports.extractTextFromStreamJson = exports.decodeSseDataPayload = exports.isAssistantUserProfileComplete = exports.clearAssistantUserProfile = exports.writeAssistantUserProfile = exports.readAssistantUserProfile = exports.ASSISTANT_FULL_PAGE_STORAGE_KEY = exports.ASSISTANT_HISTORY_STORAGE_KEY = exports.writeAssistantFullPagePreference = exports.readAssistantFullPagePreference = exports.removeAssistantConversation = exports.upsertAssistantConversation = exports.listAssistantConversations = exports.buildLearningMetadata = exports.isFsAiApiConfigured = exports.canUseLearningAssistant = exports.useAssistantStream = exports.useAssistantPhase = exports.useAssistantConversation = exports.fsAiApi = exports.configureFsAi = exports.useAssistant = exports.AssistantContext = exports.AssistantContextProvider = void 0;
+exports.createFsAiProxyHandler = exports.isOrphanListMarkerLine = exports.visibleStripped = exports.sanitizeAssistantMarkdown = exports.filterDisplayableAssistantSources = exports.extractTextFromStreamJson = exports.decodeSseDataPayload = exports.isAssistantUserProfileComplete = exports.clearAssistantUserProfile = exports.writeAssistantUserProfile = exports.readAssistantUserProfile = exports.ASSISTANT_FULL_PAGE_STORAGE_KEY = exports.ASSISTANT_HISTORY_STORAGE_KEY = exports.writeAssistantFullPagePreference = exports.readAssistantFullPagePreference = exports.removeAssistantConversation = exports.upsertAssistantConversation = exports.listAssistantConversations = exports.buildLearningMetadata = exports.useAssistantLoggedInGate = exports.useAssistantVisibilityGate = exports.isAssistantHiddenAuthPath = exports.canShowLoggedInAssistant = exports.canShowAssistant = exports.ASSISTANT_HIDDEN_AUTH_PATHS = exports.isFsAiApiConfigured = exports.canUseLearningAssistant = exports.useAssistantStream = exports.useAssistantPhase = exports.useAssistantConversation = exports.fsAiApi = exports.configureFsAi = exports.useAssistant = exports.AssistantContext = exports.AssistantContextProvider = void 0;
 __exportStar(require("./components"), exports);
 var assistantContext_1 = require("./contexts/assistantContext");
 Object.defineProperty(exports, "AssistantContextProvider", { enumerable: true, get: function () { return __importDefault(assistantContext_1).default; } });
@@ -35,6 +35,14 @@ Object.defineProperty(exports, "useAssistantStream", { enumerable: true, get: fu
 var canUseLearningAssistant_1 = require("./helpers/canUseLearningAssistant");
 Object.defineProperty(exports, "canUseLearningAssistant", { enumerable: true, get: function () { return canUseLearningAssistant_1.canUseLearningAssistant; } });
 Object.defineProperty(exports, "isFsAiApiConfigured", { enumerable: true, get: function () { return canUseLearningAssistant_1.isFsAiApiConfigured; } });
+var assistantAuthGate_1 = require("./helpers/assistantAuthGate");
+Object.defineProperty(exports, "ASSISTANT_HIDDEN_AUTH_PATHS", { enumerable: true, get: function () { return assistantAuthGate_1.ASSISTANT_HIDDEN_AUTH_PATHS; } });
+Object.defineProperty(exports, "canShowAssistant", { enumerable: true, get: function () { return assistantAuthGate_1.canShowAssistant; } });
+Object.defineProperty(exports, "canShowLoggedInAssistant", { enumerable: true, get: function () { return assistantAuthGate_1.canShowLoggedInAssistant; } });
+Object.defineProperty(exports, "isAssistantHiddenAuthPath", { enumerable: true, get: function () { return assistantAuthGate_1.isAssistantHiddenAuthPath; } });
+var useAssistantVisibilityGate_1 = require("./hooks/useAssistantVisibilityGate");
+Object.defineProperty(exports, "useAssistantVisibilityGate", { enumerable: true, get: function () { return useAssistantVisibilityGate_1.useAssistantVisibilityGate; } });
+Object.defineProperty(exports, "useAssistantLoggedInGate", { enumerable: true, get: function () { return useAssistantVisibilityGate_1.useAssistantLoggedInGate; } });
 var buildLearningMetadata_1 = require("./helpers/buildLearningMetadata");
 Object.defineProperty(exports, "buildLearningMetadata", { enumerable: true, get: function () { return buildLearningMetadata_1.buildLearningMetadata; } });
 var assistantConversationHistory_1 = require("./helpers/assistantConversationHistory");

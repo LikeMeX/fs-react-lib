@@ -6,6 +6,8 @@ export { useAssistantConversation } from './hooks/useAssistantConversation';
 export { useAssistantPhase } from './hooks/useAssistantPhase';
 export { useAssistantStream } from './hooks/useAssistantStream';
 export { canUseLearningAssistant, isFsAiApiConfigured, } from './helpers/canUseLearningAssistant';
+export { ASSISTANT_HIDDEN_AUTH_PATHS, canShowAssistant, canShowLoggedInAssistant, isAssistantHiddenAuthPath, } from './helpers/assistantAuthGate';
+export { useAssistantVisibilityGate, useAssistantLoggedInGate } from './hooks/useAssistantVisibilityGate';
 export { buildLearningMetadata } from './helpers/buildLearningMetadata';
 export type { BuildLearningMetadataInput } from './helpers/buildLearningMetadata';
 export { listAssistantConversations, upsertAssistantConversation, removeAssistantConversation, readAssistantFullPagePreference, writeAssistantFullPagePreference, ASSISTANT_HISTORY_STORAGE_KEY, ASSISTANT_FULL_PAGE_STORAGE_KEY, } from './helpers/assistantConversationHistory';

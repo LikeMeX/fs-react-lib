@@ -9,6 +9,13 @@ export {
     canUseLearningAssistant,
     isFsAiApiConfigured,
 } from './helpers/canUseLearningAssistant';
+export {
+    ASSISTANT_HIDDEN_AUTH_PATHS,
+    canShowAssistant,
+    canShowLoggedInAssistant,
+    isAssistantHiddenAuthPath,
+} from './helpers/assistantAuthGate';
+export { useAssistantVisibilityGate, useAssistantLoggedInGate } from './hooks/useAssistantVisibilityGate';
 export { buildLearningMetadata } from './helpers/buildLearningMetadata';
 export type { BuildLearningMetadataInput } from './helpers/buildLearningMetadata';
 export {

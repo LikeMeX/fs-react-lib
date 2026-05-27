@@ -64,8 +64,9 @@ export default function MyApp({ Component, pageProps }) {
                     <QueryClientProvider client={queryClient}>
                         <AssistantContextProvider>
                             <Component {...pageProps} />
-                            <AssistantNavButton floating canUse />
-                            <AssistantPanel surface="general" canUse />
+                            <LearningAssistantShell isLoggedIn={isLoggedIn} pathname={router.pathname}>
+                                {/* app routes */}
+                            </LearningAssistantShell>
                         </AssistantContextProvider>
                     </QueryClientProvider>
                 </StyleProvider>

@@ -7,6 +7,8 @@ exports.MessageBubble = void 0;
 const react_1 = __importDefault(require("react"));
 const react_markdown_1 = __importDefault(require("react-markdown"));
 const remark_gfm_1 = __importDefault(require("remark-gfm"));
+const remark_math_1 = __importDefault(require("remark-math"));
+const rehype_katex_1 = __importDefault(require("rehype-katex"));
 const sanitizeAssistantMarkdown_1 = require("../helpers/sanitizeAssistantMarkdown");
 const filterAssistantSources_1 = require("../helpers/filterAssistantSources");
 function nodeHasContent(node) {
@@ -67,7 +69,7 @@ const MessageBubble = ({ message }) => {
     const isUser = message.role === 'user';
     const displaySources = (0, filterAssistantSources_1.filterDisplayableAssistantSources)(message.sources) ?? [];
     return (react_1.default.createElement("div", { className: `max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${isUser ? 'ml-auto rounded-br-sm bg-primaryFS-500 text-white' : 'mr-auto rounded-bl-sm bg-blackFS-600 text-blackFS-100'}` },
-        isUser ? (react_1.default.createElement("div", { className: "whitespace-pre-wrap" }, message.content)) : (react_1.default.createElement(react_markdown_1.default, { remarkPlugins: [remark_gfm_1.default, pruneEmptyListItems], components: markdownComponents }, (0, sanitizeAssistantMarkdown_1.sanitizeAssistantMarkdown)(message.content))),
+        isUser ? (react_1.default.createElement("div", { className: "whitespace-pre-wrap" }, message.content)) : (react_1.default.createElement(react_markdown_1.default, { remarkPlugins: [remark_gfm_1.default, remark_math_1.default, pruneEmptyListItems], rehypePlugins: [rehype_katex_1.default], components: markdownComponents }, (0, sanitizeAssistantMarkdown_1.sanitizeAssistantMarkdown)(message.content))),
         displaySources.length > 0 && (react_1.default.createElement("ul", { className: "mt-2 list-disc pl-4 text-xs opacity-80" }, displaySources.map((s, i) => (react_1.default.createElement("li", { key: i }, s.url ? (react_1.default.createElement("a", { href: s.url, target: "_blank", rel: "noopener noreferrer", className: "underline" }, s.title || s.url)) : (s.title))))))));
 };
 exports.MessageBubble = MessageBubble;
