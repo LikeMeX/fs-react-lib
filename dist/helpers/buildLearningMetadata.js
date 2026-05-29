@@ -35,6 +35,17 @@ function normalizeActionIntent(raw) {
     const v = raw.trim().toLowerCase();
     return ALLOWED_ACTION_INTENTS.has(v) ? v : 'free_chat';
 }
+function buildAdditionalContext(input) {
+    const merged = { ...(input.additionalContext ?? {}) };
+    if (input.learningPathId != null && String(input.learningPathId).trim()) {
+        merged.learning_path_id = String(input.learningPathId);
+    }
+    const lpName = input.learningPathName?.trim();
+    if (lpName) {
+        merged.learning_path_name = lpName;
+    }
+    return Object.keys(merged).length > 0 ? merged : undefined;
+}
 function pickProfileField(user, keys) {
     if (!user)
         return undefined;
@@ -47,7 +58,12 @@ function pickProfileField(user, keys) {
     return undefined;
 }
 function buildLearningMetadata(input) {
-    const { userMember, courseId, lessonId, chapterId, videoTimestamp, actionIntent, mode, lessonCompleted, courseCompleted, profileOverride, } = input;
+    const { userMember, courseId, lessonId, chapterId, videoTimestamp, actionIntent, mode, lessonCompleted, courseCompleted, profileOverride, learningPathId, learningPathName, additionalContext, } = input;
+    const additional_context = buildAdditionalContext({
+        learningPathId,
+        learningPathName,
+        additionalContext,
+    });
     const passFromToken = userMember?.pass_type;
     const currentJob = profileOverride?.current_job?.trim() ||
         pickProfileField(userMember, ['jobTitle', 'position', 'firstName']) ||
@@ -80,6 +96,7 @@ function buildLearningMetadata(input) {
             ...(videoTimestamp != null ? { video_timestamp: videoTimestamp } : {}),
             lesson_completed: lessonCompleted ?? false,
             course_completed: courseCompleted ?? false,
+            ...(additional_context ? { additional_context } : {}),
         },
     };
     return meta;

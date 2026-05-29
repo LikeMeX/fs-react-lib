@@ -1,5 +1,7 @@
 /** Persists assistant personalization profile in localStorage. Survives reloads, scoped per browser. */
 
+import { UserProfileOut } from '../services/onboardingApi';
+
 const STORAGE_KEY = 'assistant.user_profile.v1';
 
 export interface AssistantUserProfile {
@@ -52,6 +54,25 @@ export function clearAssistantUserProfile(): void {
     } catch {
         /* ignore */
     }
+}
+
+/** Map server legacy profile columns to local assistant metadata shape. */
+export function userProfileOutToAssistant(
+    profile: UserProfileOut | null | undefined
+): AssistantUserProfile | null {
+    if (!profile) return null;
+    const current_job = profile.current_job?.trim() ?? '';
+    const target_job = profile.target_job?.trim() ?? '';
+    const industry = profile.industry?.trim() ?? '';
+    const timeframe = profile.timeframe?.trim() ?? '';
+    if (!current_job && !target_job && !industry && !timeframe) return null;
+    return {
+        current_job,
+        target_job,
+        industry,
+        timeframe,
+        ...(profile.skill_level?.trim() ? { skill_level: profile.skill_level.trim() } : {}),
+    };
 }
 
 export function isAssistantUserProfileComplete(profile: AssistantUserProfile | null): boolean {

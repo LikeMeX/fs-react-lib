@@ -56,9 +56,9 @@ const Composer = ({ disabled, loading, onSend, onAttach, placeholder = 'Type you
                     submit();
                 }
             }, className: "block w-full resize-none border-0 bg-transparent p-0 text-sm text-blackFS-100 placeholder-blackFS-300 focus:outline-none focus:ring-0 disabled:opacity-60" }),
-        react_1.default.createElement("div", { className: "mt-2 flex items-center justify-between" },
-            react_1.default.createElement("button", { type: "button", "aria-label": "\u0E41\u0E19\u0E1A\u0E44\u0E1F\u0E25\u0E4C", disabled: disabled || loading || !onAttach, onClick: onAttach, className: "flex h-8 w-8 items-center justify-center rounded-full text-blackFS-300 transition hover:text-blackFS-100 disabled:cursor-not-allowed disabled:opacity-50" },
-                react_1.default.createElement(LuPaperclip, { size: 18 })),
+        react_1.default.createElement("div", { className: `mt-2 flex items-center ${onAttach ? 'justify-between' : 'justify-end'}` },
+            onAttach ? (react_1.default.createElement("button", { type: "button", "aria-label": "\u0E41\u0E19\u0E1A\u0E44\u0E1F\u0E25\u0E4C", disabled: disabled || loading, onClick: onAttach, className: "flex h-8 w-8 items-center justify-center rounded-full text-blackFS-300 transition hover:text-blackFS-100 disabled:cursor-not-allowed disabled:opacity-50" },
+                react_1.default.createElement(LuPaperclip, { size: 18 }))) : null,
             react_1.default.createElement("button", { type: "button", "aria-label": "\u0E2A\u0E48\u0E07", disabled: !canSend, onClick: submit, className: "flex h-8 w-8 items-center justify-center rounded-full bg-primaryFS-500 text-white transition hover:bg-primaryFS-400 disabled:cursor-not-allowed disabled:opacity-40" }, loading ? react_1.default.createElement(LuLoader, { size: 16, className: "animate-spin" }) : react_1.default.createElement(LuArrowUp, { size: 16 })))));
 };
 exports.Composer = Composer;

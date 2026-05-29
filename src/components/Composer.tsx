@@ -48,15 +48,18 @@ export const Composer: React.FC<ComposerProps> = ({
                 }}
                 className="block w-full resize-none border-0 bg-transparent p-0 text-sm text-blackFS-100 placeholder-blackFS-300 focus:outline-none focus:ring-0 disabled:opacity-60"
             />
-            <div className="mt-2 flex items-center justify-between">
-                <button
-                    type="button"
-                    aria-label="แนบไฟล์"
-                    disabled={disabled || loading || !onAttach}
-                    onClick={onAttach}
-                    className="flex h-8 w-8 items-center justify-center rounded-full text-blackFS-300 transition hover:text-blackFS-100 disabled:cursor-not-allowed disabled:opacity-50">
-                    <LuPaperclip size={18} />
-                </button>
+            <div
+                className={`mt-2 flex items-center ${onAttach ? 'justify-between' : 'justify-end'}`}>
+                {onAttach ? (
+                    <button
+                        type="button"
+                        aria-label="แนบไฟล์"
+                        disabled={disabled || loading}
+                        onClick={onAttach}
+                        className="flex h-8 w-8 items-center justify-center rounded-full text-blackFS-300 transition hover:text-blackFS-100 disabled:cursor-not-allowed disabled:opacity-50">
+                        <LuPaperclip size={18} />
+                    </button>
+                ) : null}
                 <button
                     type="button"
                     aria-label="ส่ง"

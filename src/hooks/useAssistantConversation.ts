@@ -7,6 +7,8 @@ export interface UseAssistantConversationOptions {
     pinnedConversationId: string | null;
     /** Increment to force a new server conversation (new chat). */
     sessionKey: number;
+    /** fs-ai user id from POST /users/ensure — attached to new conversations when set. */
+    fsAiUserId?: string | null;
 }
 
 export function useAssistantConversation(
@@ -17,12 +19,14 @@ export function useAssistantConversation(
 ) {
     const pinned = options?.pinnedConversationId ?? null;
     const sessionKey = options?.sessionKey ?? 0;
+    const fsAiUserId = options?.fsAiUserId ?? null;
 
     const query = useQuery({
-        queryKey: ['fs-ai-conversation', courseId ?? 'none', initialMode, sessionKey],
+        queryKey: ['fs-ai-conversation', courseId ?? 'none', initialMode, sessionKey, fsAiUserId],
         queryFn: async () => {
             const res = await fsAiApi.createConversation({
                 learning_mode: initialMode,
+                ...(fsAiUserId ? { user_id: fsAiUserId } : {}),
             });
             return res.id;
         },

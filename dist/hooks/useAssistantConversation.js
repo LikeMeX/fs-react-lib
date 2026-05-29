@@ -6,11 +6,13 @@ const fsAiApi_1 = require("../services/fsAiApi");
 function useAssistantConversation(courseId, initialMode, enabled, options) {
     const pinned = options?.pinnedConversationId ?? null;
     const sessionKey = options?.sessionKey ?? 0;
+    const fsAiUserId = options?.fsAiUserId ?? null;
     const query = (0, react_query_1.useQuery)({
-        queryKey: ['fs-ai-conversation', courseId ?? 'none', initialMode, sessionKey],
+        queryKey: ['fs-ai-conversation', courseId ?? 'none', initialMode, sessionKey, fsAiUserId],
         queryFn: async () => {
             const res = await fsAiApi_1.fsAiApi.createConversation({
                 learning_mode: initialMode,
+                ...(fsAiUserId ? { user_id: fsAiUserId } : {}),
             });
             return res.id;
         },

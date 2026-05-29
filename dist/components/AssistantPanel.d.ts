@@ -17,5 +17,8 @@ export interface AssistantPanelProps {
     canUse?: boolean;
     /** Called when sending a message; return current player time in seconds (watch only). */
     getVideoTimestamp?: () => number;
+    learningPathId?: string | number | null;
+    learningPathName?: string | null;
+    additionalContext?: Record<string, unknown> | null;
 }
 export declare const AssistantPanel: React.FC<AssistantPanelProps>;

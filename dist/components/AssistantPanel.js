@@ -59,13 +59,16 @@ const assistantConversationHistory_1 = require("../helpers/assistantConversation
 const canUseLearningAssistant_1 = require("../helpers/canUseLearningAssistant");
 const buildLearningMetadata_1 = require("../helpers/buildLearningMetadata");
 const assistantUserProfile_1 = require("../helpers/assistantUserProfile");
+const oauthUserEnsure_1 = require("../helpers/oauthUserEnsure");
 const useAssistantConversation_1 = require("../hooks/useAssistantConversation");
 const useAssistantPhase_1 = require("../hooks/useAssistantPhase");
 const useAssistantStream_1 = require("../hooks/useAssistantStream");
 const fsAiApi_1 = require("../services/fsAiApi");
+const onboardingApi_1 = require("../services/onboardingApi");
 const constants_1 = require("./constants");
 const Composer_1 = require("./Composer");
 const MessageList_1 = require("./MessageList");
+const OnboardingWizard_1 = require("./OnboardingWizard");
 const ModePicker_1 = require("./ModePicker");
 const SuggestedActions_1 = require("./SuggestedActions");
 const WelcomeMessage_1 = require("./WelcomeMessage");
@@ -116,7 +119,7 @@ function initialModeFor(surface, modes) {
         return 'general';
     return modes[0] ?? 'general';
 }
-const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapterId, lessonComplete = false, courseComplete = false, modes, userMember, canUse, getVideoTimestamp, }) => {
+const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapterId, lessonComplete = false, courseComplete = false, modes, userMember, canUse, getVideoTimestamp, learningPathId, learningPathName, additionalContext, }) => {
     const { open, setOpen } = (0, assistantContext_1.useAssistant)();
     const allowedModes = modes && modes.length ? modes : DEFAULT_MODES;
     const singleMode = allowedModes.length === 1;
@@ -135,11 +138,26 @@ const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapte
     const [profileEditOpen, setProfileEditOpen] = (0, react_1.useState)(false);
     const [profileDraft, setProfileDraft] = (0, react_1.useState)({});
     const [profileStepIdx, setProfileStepIdx] = (0, react_1.useState)(0);
+    const skillpassOn = (0, oauthUserEnsure_1.isSkillpassOnboardingEnabled)();
+    const [fsAiUserId, setFsAiUserId] = (0, react_1.useState)(null);
+    const [ensureReady, setEnsureReady] = (0, react_1.useState)(!skillpassOn);
+    const [ensureError, setEnsureError] = (0, react_1.useState)(null);
+    const [onboardingComplete, setOnboardingComplete] = (0, react_1.useState)(!skillpassOn);
+    const [serverUserProfile, setServerUserProfile] = (0, react_1.useState)(null);
     const allowed = canUse ?? (0, canUseLearningAssistant_1.canUseLearningAssistant)(userMember);
     const configured = (0, canUseLearningAssistant_1.isFsAiApiConfigured)();
-    const convQuery = (0, useAssistantConversation_1.useAssistantConversation)(courseId, selectedMode ?? initialMode, allowed && configured, {
+    const inSkillpassOnboarding = skillpassOn &&
+        ensureReady &&
+        !!fsAiUserId &&
+        (!onboardingComplete || profileEditOpen);
+    const convQuery = (0, useAssistantConversation_1.useAssistantConversation)(courseId, selectedMode ?? initialMode, allowed &&
+        configured &&
+        ensureReady &&
+        !inSkillpassOnboarding &&
+        (!skillpassOn || !!fsAiUserId), {
         pinnedConversationId: pinnedConversationId,
         sessionKey,
+        fsAiUserId,
     });
     const conversationId = convQuery.data ?? null;
     const { apiMode, lastError } = (0, useAssistantPhase_1.useAssistantPhase)({
@@ -156,11 +174,58 @@ const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapte
     const { messages, setMessages, suggestedActions, streaming, error: streamError, send, reset } = (0, useAssistantStream_1.useAssistantStream)();
     (0, react_1.useEffect)(() => {
         setFullPage((0, assistantConversationHistory_1.readAssistantFullPagePreference)());
-        setUserProfile((0, assistantUserProfile_1.readAssistantUserProfile)());
+        if (!skillpassOn) {
+            setUserProfile((0, assistantUserProfile_1.readAssistantUserProfile)());
+        }
         setProfileLoaded(true);
-    }, []);
-    const profileComplete = (0, assistantUserProfile_1.isAssistantUserProfileComplete)(userProfile);
-    const inProfileChat = profileLoaded && (!profileComplete || profileEditOpen);
+    }, [skillpassOn]);
+    (0, react_1.useEffect)(() => {
+        if (!profileLoaded || !skillpassOn || !userMember) {
+            if (skillpassOn && profileLoaded && !userMember) {
+                setEnsureReady(true);
+            }
+            return;
+        }
+        let cancelled = false;
+        setEnsureReady(false);
+        setEnsureError(null);
+        void (async () => {
+            const claims = (0, oauthUserEnsure_1.oauthClaimsFromUserMember)(userMember);
+            if (!claims) {
+                if (!cancelled)
+                    setEnsureReady(true);
+                return;
+            }
+            try {
+                const res = await onboardingApi_1.onboardingApi.ensureUser(claims);
+                if (cancelled)
+                    return;
+                setFsAiUserId(res.user_id);
+                setOnboardingComplete(res.onboarding_complete);
+                setServerUserProfile(res.user_profile ?? null);
+                const mapped = (0, assistantUserProfile_1.userProfileOutToAssistant)(res.user_profile);
+                if (mapped)
+                    setUserProfile(mapped);
+            }
+            catch (e) {
+                if (!cancelled) {
+                    setEnsureError(e instanceof Error ? e.message : 'เชื่อมต่อ SkillPass ไม่สำเร็จ');
+                }
+            }
+            finally {
+                if (!cancelled)
+                    setEnsureReady(true);
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [profileLoaded, skillpassOn, userMember]);
+    const profileComplete = skillpassOn
+        ? onboardingComplete
+        : (0, assistantUserProfile_1.isAssistantUserProfileComplete)(userProfile);
+    const inLegacyProfileChat = !skillpassOn && profileLoaded && (!profileComplete || profileEditOpen);
+    const inProfileChat = inLegacyProfileChat;
     const currentProfileStep = inProfileChat && profileStepIdx < PROFILE_STEPS.length ? PROFILE_STEPS[profileStepIdx] : null;
     const profileChatMessages = (0, react_1.useMemo)(() => {
         if (!inProfileChat)
@@ -216,11 +281,32 @@ const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapte
             setProfileStepIdx(0);
         }
     }, [currentProfileStep, profileDraft, profileStepIdx]);
+    const refreshEnsureUser = (0, react_1.useCallback)(async () => {
+        if (!userMember)
+            return;
+        const claims = (0, oauthUserEnsure_1.oauthClaimsFromUserMember)(userMember);
+        if (!claims)
+            return;
+        const res = await onboardingApi_1.onboardingApi.ensureUser(claims);
+        setFsAiUserId(res.user_id);
+        setOnboardingComplete(res.onboarding_complete);
+        setServerUserProfile(res.user_profile ?? null);
+        const mapped = (0, assistantUserProfile_1.userProfileOutToAssistant)(res.user_profile);
+        if (mapped)
+            setUserProfile(mapped);
+    }, [userMember]);
+    const handleOnboardingComplete = (0, react_1.useCallback)(() => {
+        setProfileEditOpen(false);
+        void refreshEnsureUser().catch(() => {
+            setOnboardingComplete(true);
+        });
+    }, [refreshEnsureUser]);
     const startProfileEdit = (0, react_1.useCallback)(() => {
-        // Pre-fill draft with existing profile so user reviews/edits current values
-        // instead of re-entering from scratch.
+        if (skillpassOn) {
+            setProfileEditOpen(true);
+            return;
+        }
         setProfileDraft(userProfile ?? {});
-        // Skip past already-filled steps; land on first blank or end-of-flow.
         let idx = 0;
         if (userProfile) {
             for (idx = 0; idx < PROFILE_STEPS.length; idx++) {
@@ -230,7 +316,7 @@ const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapte
         }
         setProfileStepIdx(idx);
         setProfileEditOpen(true);
-    }, [userProfile]);
+    }, [skillpassOn, userProfile]);
     const cancelProfileEdit = (0, react_1.useCallback)(() => {
         setProfileEditOpen(false);
         setProfileDraft({});
@@ -375,7 +461,12 @@ const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapte
             mode: apiMode,
             lessonCompleted: lessonComplete,
             courseCompleted: courseComplete,
-            profileOverride: userProfile,
+            learningPathId,
+            learningPathName,
+            additionalContext,
+            profileOverride: userProfile ??
+                (0, assistantUserProfile_1.userProfileOutToAssistant)(serverUserProfile) ??
+                undefined,
         });
         (0, assistantConversationHistory_1.upsertAssistantConversation)({
             id: conversationId,
@@ -395,8 +486,12 @@ const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapte
         getVideoTimestamp,
         lessonComplete,
         lessonId,
+        learningPathId,
+        learningPathName,
+        additionalContext,
         send,
         surface,
+        serverUserProfile,
         userMember,
         userProfile,
     ]);
@@ -428,12 +523,13 @@ const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapte
                 convQuery.isError && (react_1.default.createElement(antd_1.Alert, { type: "error", message: "\u0E44\u0E21\u0E48\u0E2A\u0E32\u0E21\u0E32\u0E23\u0E16\u0E2A\u0E23\u0E49\u0E32\u0E07\u0E1A\u0E17\u0E2A\u0E19\u0E17\u0E19\u0E32\u0E44\u0E14\u0E49", className: "mb-3", showIcon: true })),
                 streamError && (react_1.default.createElement(antd_1.Alert, { type: "error", message: streamError, className: "mb-3", showIcon: true, closable: true })),
                 historyError && (react_1.default.createElement(antd_1.Alert, { type: "warning", message: historyError, className: "mb-3", showIcon: true, closable: true, onClose: () => setHistoryError(null) })),
-                react_1.default.createElement("div", { className: "flex min-h-0 flex-1 flex-col overflow-y-auto" }, inProfileChat ? (react_1.default.createElement(MessageList_1.MessageList, { messages: profileChatMessages })) : showPicker ? (react_1.default.createElement(ModePicker_1.ModePicker, { disabled: !conversationId || convQuery.isLoading, modes: allowedModes, onSelect: mode => setSelectedMode(mode) })) : (react_1.default.createElement(react_1.default.Fragment, null,
+                ensureError && (react_1.default.createElement(antd_1.Alert, { type: "error", message: ensureError, className: "mb-3", showIcon: true, closable: true, onClose: () => setEnsureError(null) })),
+                react_1.default.createElement("div", { className: "flex min-h-0 flex-1 flex-col overflow-y-auto" }, inSkillpassOnboarding && fsAiUserId ? (react_1.default.createElement(OnboardingWizard_1.OnboardingWizard, { fsAiUserId: fsAiUserId, restart: profileEditOpen && onboardingComplete, onComplete: handleOnboardingComplete })) : inProfileChat ? (react_1.default.createElement(MessageList_1.MessageList, { messages: profileChatMessages })) : showPicker ? (react_1.default.createElement(ModePicker_1.ModePicker, { disabled: !conversationId || convQuery.isLoading, modes: allowedModes, onSelect: mode => setSelectedMode(mode) })) : (react_1.default.createElement(react_1.default.Fragment, null,
                     messages.length === 0 ? (react_1.default.createElement(WelcomeMessage_1.WelcomeMessage, { mode: apiMode })) : (react_1.default.createElement(MessageList_1.MessageList, { messages: messages })),
                     react_1.default.createElement(SuggestedActions_1.SuggestedActions, { mode: apiMode, actions: suggestedActions, disabled: streaming || !conversationId, onSelect: (message, actionIntent) => {
                             void handleSend(message, actionIntent);
                         } })))),
-                react_1.default.createElement(Composer_1.Composer, { disabled: inProfileChat
+                !inSkillpassOnboarding && (react_1.default.createElement(Composer_1.Composer, { disabled: inProfileChat
                         ? !currentProfileStep
                         : !conversationId || convQuery.isLoading, loading: inProfileChat ? false : streaming, onSend: text => {
                         if (inProfileChat) {
@@ -442,7 +538,7 @@ const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapte
                         else {
                             void handleSend(text);
                         }
-                    } }))),
+                    } })))),
         react_1.default.createElement(antd_1.Drawer, { title: "\u0E1A\u0E17\u0E2A\u0E19\u0E17\u0E19\u0E32\u0E01\u0E48\u0E2D\u0E19\u0E2B\u0E19\u0E49\u0E32", placement: "left", width: 360, onClose: () => setHistoryOpen(false), open: historyOpen, destroyOnClose: false, extra: react_1.default.createElement(antd_1.Tooltip, { title: "\u0E40\u0E23\u0E34\u0E48\u0E21\u0E1A\u0E17\u0E2A\u0E19\u0E17\u0E19\u0E32\u0E43\u0E2B\u0E21\u0E48" },
                 react_1.default.createElement("button", { type: "button", "aria-label": "\u0E40\u0E23\u0E34\u0E48\u0E21\u0E1A\u0E17\u0E2A\u0E19\u0E17\u0E19\u0E32\u0E43\u0E2B\u0E21\u0E48\u0E08\u0E32\u0E01\u0E41\u0E1C\u0E07\u0E1B\u0E23\u0E30\u0E27\u0E31\u0E15\u0E34", onClick: handleNewConversation, className: "flex h-10 w-10 items-center justify-center rounded-lg text-black/70 transition hover:bg-black/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaryFS-500 dark:text-white/80 dark:hover:bg-white/10" },
                     react_1.default.createElement(LuMessageSquarePlus, { size: 20, "aria-hidden": true }))), styles: {

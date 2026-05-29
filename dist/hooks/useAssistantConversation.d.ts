@@ -4,6 +4,8 @@ export interface UseAssistantConversationOptions {
     pinnedConversationId: string | null;
     /** Increment to force a new server conversation (new chat). */
     sessionKey: number;
+    /** fs-ai user id from POST /users/ensure — attached to new conversations when set. */
+    fsAiUserId?: string | null;
 }
 export declare function useAssistantConversation(courseId: number | null, initialMode: LearningModeApi, enabled: boolean, options?: UseAssistantConversationOptions): {
     data: string;

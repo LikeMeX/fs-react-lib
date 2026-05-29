@@ -4,6 +4,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.readAssistantUserProfile = readAssistantUserProfile;
 exports.writeAssistantUserProfile = writeAssistantUserProfile;
 exports.clearAssistantUserProfile = clearAssistantUserProfile;
+exports.userProfileOutToAssistant = userProfileOutToAssistant;
 exports.isAssistantUserProfileComplete = isAssistantUserProfileComplete;
 const STORAGE_KEY = 'assistant.user_profile.v1';
 const REQUIRED_FIELDS = [
@@ -53,6 +54,24 @@ function clearAssistantUserProfile() {
     catch {
         /* ignore */
     }
+}
+/** Map server legacy profile columns to local assistant metadata shape. */
+function userProfileOutToAssistant(profile) {
+    if (!profile)
+        return null;
+    const current_job = profile.current_job?.trim() ?? '';
+    const target_job = profile.target_job?.trim() ?? '';
+    const industry = profile.industry?.trim() ?? '';
+    const timeframe = profile.timeframe?.trim() ?? '';
+    if (!current_job && !target_job && !industry && !timeframe)
+        return null;
+    return {
+        current_job,
+        target_job,
+        industry,
+        timeframe,
+        ...(profile.skill_level?.trim() ? { skill_level: profile.skill_level.trim() } : {}),
+    };
 }
 function isAssistantUserProfileComplete(profile) {
     if (!profile)

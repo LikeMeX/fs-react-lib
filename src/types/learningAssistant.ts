@@ -31,6 +31,8 @@ export interface LearningMetadata {
         video_timestamp?: number;
         course_completed?: boolean;
         lesson_completed?: boolean;
+        /** Extra page context (e.g. learning path id/name). FS AI LearningState.additional_context */
+        additional_context?: Record<string, unknown>;
     };
     action_intent?: string;
     pass_type?: string;
@@ -53,6 +55,8 @@ export interface CreateConversationBody {
     /** Backend `CreateConversationIn` uses `learning_mode`. `course_id` not in contract. */
     learning_mode?: LearningModeApi;
     title?: string;
+    /** fs-ai user UUID from POST /users/ensure — enables server-side profile_extra in coach prompts. */
+    user_id?: string;
 }
 
 export interface CreateConversationResponse {

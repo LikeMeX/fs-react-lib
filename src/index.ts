@@ -35,6 +35,19 @@ export {
     isAssistantUserProfileComplete,
 } from './helpers/assistantUserProfile';
 export type { AssistantUserProfile } from './helpers/assistantUserProfile';
+export { userProfileOutToAssistant } from './helpers/assistantUserProfile';
+export { onboardingApi } from './services/onboardingApi';
+export type {
+    OnboardingSession,
+    OnboardingOutcome,
+    UserEnsureResponse,
+    UserProfileOut,
+} from './services/onboardingApi';
+export {
+    isSkillpassOnboardingEnabled,
+    oauthClaimsFromUserMember,
+} from './helpers/oauthUserEnsure';
+export type { OAuthEnsureClaims } from './helpers/oauthUserEnsure';
 export { decodeSseDataPayload, extractTextFromStreamJson } from './helpers/decodeFsAiSsePayload';
 export { filterDisplayableAssistantSources } from './helpers/filterAssistantSources';
 export type { AssistantSource } from './helpers/filterAssistantSources';

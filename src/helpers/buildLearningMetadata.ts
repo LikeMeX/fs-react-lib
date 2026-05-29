@@ -11,6 +11,10 @@ export interface BuildLearningMetadataInput {
     mode: LearningModeApi;
     lessonCompleted?: boolean;
     courseCompleted?: boolean;
+    learningPathId?: string | number | null;
+    learningPathName?: string | null;
+    /** Merged with learning-path fields when both are set. */
+    additionalContext?: Record<string, unknown> | null;
     /** Locally collected profile. Wins over JWT-derived placeholders when present. */
     profileOverride?: AssistantUserProfile | null;
 }
@@ -51,6 +55,18 @@ function normalizeActionIntent(raw?: string): string | undefined {
     return ALLOWED_ACTION_INTENTS.has(v) ? v : 'free_chat';
 }
 
+function buildAdditionalContext(input: BuildLearningMetadataInput): Record<string, unknown> | undefined {
+    const merged: Record<string, unknown> = { ...(input.additionalContext ?? {}) };
+    if (input.learningPathId != null && String(input.learningPathId).trim()) {
+        merged.learning_path_id = String(input.learningPathId);
+    }
+    const lpName = input.learningPathName?.trim();
+    if (lpName) {
+        merged.learning_path_name = lpName;
+    }
+    return Object.keys(merged).length > 0 ? merged : undefined;
+}
+
 function pickProfileField(user: AssistantUserMember, keys: string[]): string | undefined {
     if (!user) return undefined;
     const u = user as Record<string, unknown>;
@@ -73,7 +89,16 @@ export function buildLearningMetadata(input: BuildLearningMetadataInput): Learni
         lessonCompleted,
         courseCompleted,
         profileOverride,
+        learningPathId,
+        learningPathName,
+        additionalContext,
     } = input;
+
+    const additional_context = buildAdditionalContext({
+        learningPathId,
+        learningPathName,
+        additionalContext,
+    } as BuildLearningMetadataInput);
 
     const passFromToken = (userMember as Record<string, unknown> | undefined | null)?.pass_type as
         | string
@@ -115,6 +140,7 @@ export function buildLearningMetadata(input: BuildLearningMetadataInput): Learni
             ...(videoTimestamp != null ? { video_timestamp: videoTimestamp } : {}),
             lesson_completed: lessonCompleted ?? false,
             course_completed: courseCompleted ?? false,
+            ...(additional_context ? { additional_context } : {}),
         },
     };
 

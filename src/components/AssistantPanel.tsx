@@ -59,8 +59,13 @@ import {
     AssistantUserProfile,
     isAssistantUserProfileComplete,
     readAssistantUserProfile,
+    userProfileOutToAssistant,
     writeAssistantUserProfile,
 } from '../helpers/assistantUserProfile';
+import {
+    isSkillpassOnboardingEnabled,
+    oauthClaimsFromUserMember,
+} from '../helpers/oauthUserEnsure';
 import { useAssistantConversation } from '../hooks/useAssistantConversation';
 import { useAssistantPhase } from '../hooks/useAssistantPhase';
 import { useAssistantStream } from '../hooks/useAssistantStream';
@@ -70,9 +75,11 @@ import {
     AssistantUserMember,
     LearningModeApi,
 } from '../types/learningAssistant';
+import { onboardingApi, UserProfileOut } from '../services/onboardingApi';
 import { ASSISTANT_PANEL_WIDTH } from './constants';
 import { Composer } from './Composer';
 import { MessageList } from './MessageList';
+import { OnboardingWizard } from './OnboardingWizard';
 import { ModePicker } from './ModePicker';
 import { SuggestedActions } from './SuggestedActions';
 import { WelcomeMessage } from './WelcomeMessage';
@@ -93,6 +100,9 @@ export interface AssistantPanelProps {
     canUse?: boolean;
     /** Called when sending a message; return current player time in seconds (watch only). */
     getVideoTimestamp?: () => number;
+    learningPathId?: string | number | null;
+    learningPathName?: string | null;
+    additionalContext?: Record<string, unknown> | null;
 }
 
 function previewTitle(text: string, max = 72): string {
@@ -159,6 +169,9 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
     userMember,
     canUse,
     getVideoTimestamp,
+    learningPathId,
+    learningPathName,
+    additionalContext,
 }) => {
     const { open, setOpen } = useAssistant();
     const allowedModes = modes && modes.length ? modes : DEFAULT_MODES;
@@ -181,17 +194,34 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
     const [profileEditOpen, setProfileEditOpen] = useState(false);
     const [profileDraft, setProfileDraft] = useState<Partial<AssistantUserProfile>>({});
     const [profileStepIdx, setProfileStepIdx] = useState(0);
+    const skillpassOn = isSkillpassOnboardingEnabled();
+    const [fsAiUserId, setFsAiUserId] = useState<string | null>(null);
+    const [ensureReady, setEnsureReady] = useState(!skillpassOn);
+    const [ensureError, setEnsureError] = useState<string | null>(null);
+    const [onboardingComplete, setOnboardingComplete] = useState(!skillpassOn);
+    const [serverUserProfile, setServerUserProfile] = useState<UserProfileOut | null>(null);
 
     const allowed = canUse ?? canUseLearningAssistant(userMember);
     const configured = isFsAiApiConfigured();
 
+    const inSkillpassOnboarding =
+        skillpassOn &&
+        ensureReady &&
+        !!fsAiUserId &&
+        (!onboardingComplete || profileEditOpen);
+
     const convQuery = useAssistantConversation(
         courseId,
         selectedMode ?? initialMode,
-        allowed && configured,
+        allowed &&
+            configured &&
+            ensureReady &&
+            !inSkillpassOnboarding &&
+            (!skillpassOn || !!fsAiUserId),
         {
             pinnedConversationId: pinnedConversationId,
             sessionKey,
+            fsAiUserId,
         }
     );
     const conversationId = convQuery.data ?? null;
@@ -212,12 +242,57 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
 
     useEffect(() => {
         setFullPage(readAssistantFullPagePreference());
-        setUserProfile(readAssistantUserProfile());
+        if (!skillpassOn) {
+            setUserProfile(readAssistantUserProfile());
+        }
         setProfileLoaded(true);
-    }, []);
+    }, [skillpassOn]);
 
-    const profileComplete = isAssistantUserProfileComplete(userProfile);
-    const inProfileChat = profileLoaded && (!profileComplete || profileEditOpen);
+    useEffect(() => {
+        if (!profileLoaded || !skillpassOn || !userMember) {
+            if (skillpassOn && profileLoaded && !userMember) {
+                setEnsureReady(true);
+            }
+            return;
+        }
+        let cancelled = false;
+        setEnsureReady(false);
+        setEnsureError(null);
+        void (async () => {
+            const claims = oauthClaimsFromUserMember(userMember);
+            if (!claims) {
+                if (!cancelled) setEnsureReady(true);
+                return;
+            }
+            try {
+                const res = await onboardingApi.ensureUser(claims);
+                if (cancelled) return;
+                setFsAiUserId(res.user_id);
+                setOnboardingComplete(res.onboarding_complete);
+                setServerUserProfile(res.user_profile ?? null);
+                const mapped = userProfileOutToAssistant(res.user_profile);
+                if (mapped) setUserProfile(mapped);
+            } catch (e) {
+                if (!cancelled) {
+                    setEnsureError(
+                        e instanceof Error ? e.message : 'เชื่อมต่อ SkillPass ไม่สำเร็จ'
+                    );
+                }
+            } finally {
+                if (!cancelled) setEnsureReady(true);
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [profileLoaded, skillpassOn, userMember]);
+
+    const profileComplete = skillpassOn
+        ? onboardingComplete
+        : isAssistantUserProfileComplete(userProfile);
+    const inLegacyProfileChat =
+        !skillpassOn && profileLoaded && (!profileComplete || profileEditOpen);
+    const inProfileChat = inLegacyProfileChat;
     const currentProfileStep: ProfileStep | null =
         inProfileChat && profileStepIdx < PROFILE_STEPS.length ? PROFILE_STEPS[profileStepIdx] : null;
 
@@ -278,11 +353,31 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
         [currentProfileStep, profileDraft, profileStepIdx]
     );
 
+    const refreshEnsureUser = useCallback(async () => {
+        if (!userMember) return;
+        const claims = oauthClaimsFromUserMember(userMember);
+        if (!claims) return;
+        const res = await onboardingApi.ensureUser(claims);
+        setFsAiUserId(res.user_id);
+        setOnboardingComplete(res.onboarding_complete);
+        setServerUserProfile(res.user_profile ?? null);
+        const mapped = userProfileOutToAssistant(res.user_profile);
+        if (mapped) setUserProfile(mapped);
+    }, [userMember]);
+
+    const handleOnboardingComplete = useCallback(() => {
+        setProfileEditOpen(false);
+        void refreshEnsureUser().catch(() => {
+            setOnboardingComplete(true);
+        });
+    }, [refreshEnsureUser]);
+
     const startProfileEdit = useCallback(() => {
-        // Pre-fill draft with existing profile so user reviews/edits current values
-        // instead of re-entering from scratch.
+        if (skillpassOn) {
+            setProfileEditOpen(true);
+            return;
+        }
         setProfileDraft(userProfile ?? {});
-        // Skip past already-filled steps; land on first blank or end-of-flow.
         let idx = 0;
         if (userProfile) {
             for (idx = 0; idx < PROFILE_STEPS.length; idx++) {
@@ -291,7 +386,7 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
         }
         setProfileStepIdx(idx);
         setProfileEditOpen(true);
-    }, [userProfile]);
+    }, [skillpassOn, userProfile]);
 
     const cancelProfileEdit = useCallback(() => {
         setProfileEditOpen(false);
@@ -449,7 +544,13 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
                 mode: apiMode,
                 lessonCompleted: lessonComplete,
                 courseCompleted: courseComplete,
-                profileOverride: userProfile,
+                learningPathId,
+                learningPathName,
+                additionalContext,
+                profileOverride:
+                    userProfile ??
+                    userProfileOutToAssistant(serverUserProfile) ??
+                    undefined,
             });
             upsertAssistantConversation({
                 id: conversationId,
@@ -470,8 +571,12 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
             getVideoTimestamp,
             lessonComplete,
             lessonId,
+            learningPathId,
+            learningPathName,
+            additionalContext,
             send,
             surface,
+            serverUserProfile,
             userMember,
             userProfile,
         ]
@@ -563,8 +668,24 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
                             onClose={() => setHistoryError(null)}
                         />
                     )}
+                    {ensureError && (
+                        <Alert
+                            type="error"
+                            message={ensureError}
+                            className="mb-3"
+                            showIcon
+                            closable
+                            onClose={() => setEnsureError(null)}
+                        />
+                    )}
                     <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
-                        {inProfileChat ? (
+                        {inSkillpassOnboarding && fsAiUserId ? (
+                            <OnboardingWizard
+                                fsAiUserId={fsAiUserId}
+                                restart={profileEditOpen && onboardingComplete}
+                                onComplete={handleOnboardingComplete}
+                            />
+                        ) : inProfileChat ? (
                             <MessageList messages={profileChatMessages} />
                         ) : showPicker ? (
                             <ModePicker
@@ -590,21 +711,23 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
                             </>
                         )}
                     </div>
-                    <Composer
-                        disabled={
-                            inProfileChat
-                                ? !currentProfileStep
-                                : !conversationId || convQuery.isLoading
-                        }
-                        loading={inProfileChat ? false : streaming}
-                        onSend={text => {
-                            if (inProfileChat) {
-                                handleProfileAnswer(text);
-                            } else {
-                                void handleSend(text);
+                    {!inSkillpassOnboarding && (
+                        <Composer
+                            disabled={
+                                inProfileChat
+                                    ? !currentProfileStep
+                                    : !conversationId || convQuery.isLoading
                             }
-                        }}
-                    />
+                            loading={inProfileChat ? false : streaming}
+                            onSend={text => {
+                                if (inProfileChat) {
+                                    handleProfileAnswer(text);
+                                } else {
+                                    void handleSend(text);
+                                }
+                            }}
+                        />
+                    )}
                 </div>
             </aside>
 

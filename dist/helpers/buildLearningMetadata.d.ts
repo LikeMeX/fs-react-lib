@@ -10,6 +10,10 @@ export interface BuildLearningMetadataInput {
     mode: LearningModeApi;
     lessonCompleted?: boolean;
     courseCompleted?: boolean;
+    learningPathId?: string | number | null;
+    learningPathName?: string | null;
+    /** Merged with learning-path fields when both are set. */
+    additionalContext?: Record<string, unknown> | null;
     /** Locally collected profile. Wins over JWT-derived placeholders when present. */
     profileOverride?: AssistantUserProfile | null;
 }
