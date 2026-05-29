@@ -142,6 +142,8 @@ const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapte
     const [fsAiUserId, setFsAiUserId] = (0, react_1.useState)(null);
     const [ensureReady, setEnsureReady] = (0, react_1.useState)(!skillpassOn);
     const [ensureError, setEnsureError] = (0, react_1.useState)(null);
+    /** Upstream has no POST /users/ensure (older fs-ai) — chat works without SkillPass profile sync. */
+    const [ensureEndpointUnavailable, setEnsureEndpointUnavailable] = (0, react_1.useState)(false);
     const [onboardingComplete, setOnboardingComplete] = (0, react_1.useState)(!skillpassOn);
     const [serverUserProfile, setServerUserProfile] = (0, react_1.useState)(null);
     const allowed = canUse ?? (0, canUseLearningAssistant_1.canUseLearningAssistant)(userMember);
@@ -154,7 +156,7 @@ const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapte
         configured &&
         ensureReady &&
         !inSkillpassOnboarding &&
-        (!skillpassOn || !!fsAiUserId), {
+        (!skillpassOn || !!fsAiUserId || ensureEndpointUnavailable), {
         pinnedConversationId: pinnedConversationId,
         sessionKey,
         fsAiUserId,
@@ -209,7 +211,15 @@ const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapte
             }
             catch (e) {
                 if (!cancelled) {
-                    setEnsureError(e instanceof Error ? e.message : 'เชื่อมต่อ SkillPass ไม่สำเร็จ');
+                    const status = axios_1.default.isAxiosError(e) ? e.response?.status : undefined;
+                    if (status === 404) {
+                        setEnsureEndpointUnavailable(true);
+                        setOnboardingComplete(true);
+                        setEnsureError(null);
+                    }
+                    else {
+                        setEnsureError(e instanceof Error ? e.message : 'เชื่อมต่อ SkillPass ไม่สำเร็จ');
+                    }
                 }
             }
             finally {

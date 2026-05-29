@@ -1,14 +1,18 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, Button, Checkbox, Input, InputNumber, Space, Spin } from 'antd';
-import {
-    AssistantMessage,
-} from '../types/learningAssistant';
+import { Alert } from 'antd';
+import { LuCheck as LuCheckRaw, LuLoader as LuLoaderRaw } from 'react-icons/lu';
+import { AssistantMessage } from '../types/learningAssistant';
 import {
     OnboardingOutcome,
     OnboardingSession,
     UserProfileOut,
     onboardingApi,
 } from '../services/onboardingApi';
+import { MessageList } from './MessageList';
+
+type IconFC = React.FC<{ size?: number; className?: string; 'aria-hidden'?: boolean }>;
+const LuCheck = LuCheckRaw as unknown as IconFC;
+const LuLoader = LuLoaderRaw as unknown as IconFC;
 
 export interface OnboardingWizardProps {
     fsAiUserId: string;
@@ -18,6 +22,18 @@ export interface OnboardingWizardProps {
 
 const DONE_MESSAGE =
     'ขอบคุณครับ! บันทึกโปรไฟล์ SkillPass แล้ว ผู้ช่วยจะปรับคำตอบให้เหมาะกับคุณยิ่งขึ้น เริ่มถามอะไรเกี่ยวกับการเรียนได้เลย';
+
+const optionButtonClass =
+    'flex min-h-11 w-full touch-manipulation items-center gap-3 rounded-xl border px-3.5 py-2.5 text-left text-sm leading-snug transition duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primaryFS-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-blackFS-800 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none';
+
+const primaryButtonClass =
+    'inline-flex min-h-11 w-full touch-manipulation items-center justify-center rounded-xl bg-primaryFS-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition duration-150 ease-out hover:bg-primaryFS-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primaryFS-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-blackFS-800 disabled:cursor-not-allowed disabled:opacity-40 active:scale-[0.99] motion-reduce:active:scale-100';
+
+const secondaryButtonClass =
+    'inline-flex min-h-11 w-full touch-manipulation items-center justify-center rounded-xl border border-blackFS-500 bg-blackFS-700 px-4 py-2.5 text-sm font-medium text-blackFS-100 transition duration-150 ease-out hover:border-blackFS-400 hover:bg-blackFS-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primaryFS-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-blackFS-800 disabled:cursor-not-allowed disabled:opacity-40';
+
+const fieldInputClass =
+    'w-full min-h-11 rounded-xl border border-blackFS-500 bg-blackFS-700 px-3.5 py-2.5 text-sm text-blackFS-100 placeholder-blackFS-300 transition focus:border-primaryFS-400 focus:outline-none focus:ring-2 focus:ring-primaryFS-500/40 disabled:cursor-not-allowed disabled:opacity-50';
 
 export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
     fsAiUserId,
@@ -163,147 +179,198 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
         void submit(numberAnswer, String(numberAnswer));
     };
 
+    const toggleMulti = (id: string) => {
+        setMultiSelected(prev =>
+            prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+        );
+    };
+
     const optionButtons = useMemo(() => {
         if (!step?.options?.length) return null;
         if (step.input_type === 'multi_select') {
+            const overMax =
+                step.max_selections != null && multiSelected.length > step.max_selections;
             return (
-                <Space direction="vertical" style={{ width: '100%' }} size="small">
-                    <Checkbox.Group
-                        style={{ width: '100%' }}
-                        value={multiSelected}
-                        onChange={vals => setMultiSelected(vals as string[])}>
-                        {step.options.map(o => (
-                            <div key={o.id}>
-                                <Checkbox value={o.id}>{o.label}</Checkbox>
-                            </div>
-                        ))}
-                    </Checkbox.Group>
+                <div className="flex flex-col gap-3">
+                    {step.max_selections != null && (
+                        <p className="m-0 text-xs text-blackFS-300">
+                            เลือกได้สูงสุด {step.max_selections} ข้อ
+                        </p>
+                    )}
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                        {step.options.map(o => {
+                            const selected = multiSelected.includes(o.id);
+                            return (
+                                <button
+                                    key={o.id}
+                                    type="button"
+                                    disabled={submitting}
+                                    aria-pressed={selected ? 'true' : 'false'}
+                                    onClick={() => toggleMulti(o.id)}
+                                    className={`${optionButtonClass} ${
+                                        selected
+                                            ? 'border-primaryFS-400 bg-primaryFS-500/15 text-blackFS-100'
+                                            : 'border-blackFS-500 bg-blackFS-700 text-blackFS-200 hover:border-blackFS-400 hover:bg-blackFS-600 hover:text-blackFS-100'
+                                    }`}>
+                                    <span
+                                        aria-hidden
+                                        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition ${
+                                            selected
+                                                ? 'border-primaryFS-400 bg-primaryFS-500 text-white'
+                                                : 'border-blackFS-400 bg-blackFS-800'
+                                        }`}>
+                                        {selected ? <LuCheck size={14} /> : null}
+                                    </span>
+                                    <span className="flex-1">{o.label}</span>
+                                </button>
+                            );
+                        })}
+                    </div>
                     {multiSelected.includes('other') && (
-                        <Input
+                        <input
+                            type="text"
+                            className={fieldInputClass}
                             placeholder="ระบุเพิ่มเติม"
                             value={otherText}
                             onChange={e => setOtherText(e.target.value)}
                         />
                     )}
-                    <Button
-                        type="primary"
-                        block
-                        disabled={
-                            !multiSelected.length ||
-                            (step.max_selections != null &&
-                                multiSelected.length > step.max_selections)
-                        }
-                        loading={submitting}
+                    {overMax && (
+                        <p className="m-0 text-xs text-red-300" role="alert">
+                            เลือกได้ไม่เกิน {step.max_selections} ข้อ
+                        </p>
+                    )}
+                    <button
+                        type="button"
+                        className={primaryButtonClass}
+                        disabled={!multiSelected.length || overMax || submitting}
                         onClick={handleMultiSubmit}>
-                        ถัดไป
-                    </Button>
-                </Space>
+                        {submitting ? (
+                            <LuLoader size={18} className="animate-spin" aria-hidden />
+                        ) : (
+                            'ถัดไป'
+                        )}
+                    </button>
+                </div>
             );
         }
         return (
-            <Space direction="vertical" style={{ width: '100%' }} size="small">
+            <div className="flex flex-col gap-2">
                 {step.options.map(o => (
-                    <Button
+                    <button
                         key={o.id}
-                        block
-                        loading={submitting}
-                        onClick={() => handleSingleSelect(o.id, o.label)}>
-                        {o.label}
-                    </Button>
+                        type="button"
+                        disabled={submitting}
+                        onClick={() => handleSingleSelect(o.id, o.label)}
+                        className={`${optionButtonClass} border-blackFS-500 bg-blackFS-700 text-blackFS-100 hover:border-primaryFS-400 hover:bg-blackFS-600`}>
+                        {submitting ? (
+                            <LuLoader size={16} className="ml-auto animate-spin text-blackFS-300" aria-hidden />
+                        ) : null}
+                        <span className="flex-1">{o.label}</span>
+                    </button>
                 ))}
-            </Space>
+            </div>
         );
     }, [step, multiSelected, otherText, submitting]);
 
     if (loading) {
         return (
-            <div style={{ padding: 24, textAlign: 'center' }}>
-                <Spin tip="กำลังโหลด SkillPass..." />
+            <div className="flex flex-1 items-center justify-center py-12">
+                <div className="flex flex-col items-center gap-3 text-blackFS-200">
+                    <LuLoader size={28} className="animate-spin text-primaryFS-400" aria-hidden />
+                    <p className="m-0 text-sm">กำลังโหลด SkillPass...</p>
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="assistant-onboarding-wizard" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        <div className="assistant-onboarding-wizard flex min-h-0 flex-1 flex-col">
             {error && (
-                <Alert type="error" message={error} showIcon style={{ margin: 8 }} closable onClose={() => setError(null)} />
+                <Alert
+                    type="error"
+                    message={error}
+                    showIcon
+                    className="mb-3 shrink-0"
+                    closable
+                    onClose={() => setError(null)}
+                />
             )}
-            <div style={{ flex: 1, overflow: 'auto', padding: '8px 12px' }}>
-                {messages.map(m => (
-                    <div
-                        key={m.id}
-                        style={{
-                            marginBottom: 8,
-                            textAlign: m.role === 'user' ? 'right' : 'left',
-                        }}>
-                        <div
-                            style={{
-                                display: 'inline-block',
-                                maxWidth: '90%',
-                                padding: '8px 12px',
-                                borderRadius: 12,
-                                background: m.role === 'user' ? '#e6f4ff' : '#f5f5f5',
-                            }}>
-                            {m.content}
-                        </div>
-                    </div>
-                ))}
-                {outcome?.recommended_courses?.length ? (
-                    <div style={{ marginTop: 12, fontSize: 13 }}>
-                        <strong>คอร์สแนะนำ:</strong>
-                        <ul style={{ paddingLeft: 18 }}>
-                            {outcome.recommended_courses.map(c => (
-                                <li key={c.course_id}>{c.course_name}</li>
-                            ))}
-                        </ul>
-                    </div>
-                ) : null}
-            </div>
+            <MessageList messages={messages} />
+            {outcome?.recommended_courses?.length ? (
+                <div className="mb-3 rounded-xl border border-blackFS-500 bg-blackFS-700/80 px-3.5 py-3 text-sm text-blackFS-100">
+                    <p className="m-0 mb-2 font-semibold text-blackFS-100">คอร์สแนะนำ</p>
+                    <ul className="m-0 list-disc space-y-1 pl-5 text-blackFS-200">
+                        {outcome.recommended_courses.map(c => (
+                            <li key={c.course_id}>{c.course_name}</li>
+                        ))}
+                    </ul>
+                </div>
+            ) : null}
             {showComposer && (
-                <div style={{ padding: 12, borderTop: '1px solid #f0f0f0' }}>
+                <div className="mt-auto shrink-0 border-t border-blackFS-600 pt-3">
                     {optionButtons}
                     {step?.input_type === 'optional_text' && (
-                        <Space direction="vertical" style={{ width: '100%', marginTop: 8 }}>
-                            <Space.Compact style={{ width: '100%' }}>
-                                <Input
+                        <div className="flex flex-col gap-2">
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    className={`${fieldInputClass} flex-1`}
                                     value={textAnswer}
                                     onChange={e => setTextAnswer(e.target.value)}
-                                    onPressEnter={handleTextSubmit}
+                                    onKeyDown={e => {
+                                        if (e.key === 'Enter') handleTextSubmit();
+                                    }}
                                     placeholder="พิมพ์คำตอบ (ไม่บังคับ)"
                                 />
-                                <Button type="primary" loading={submitting} onClick={handleTextSubmit}>
+                                <button
+                                    type="button"
+                                    className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl bg-primaryFS-500 px-4 text-sm font-semibold text-white transition hover:bg-primaryFS-400 disabled:opacity-40"
+                                    disabled={submitting || !textAnswer.trim()}
+                                    onClick={handleTextSubmit}>
                                     ส่ง
-                                </Button>
-                            </Space.Compact>
-                            <Button
-                                block
-                                loading={submitting}
+                                </button>
+                            </div>
+                            <button
+                                type="button"
+                                className={secondaryButtonClass}
+                                disabled={submitting}
                                 onClick={() => void submit('', 'ข้าม')}>
                                 ข้าม
-                            </Button>
-                        </Space>
+                            </button>
+                        </div>
                     )}
                     {step?.input_type === 'number' && (
-                        <Space style={{ width: '100%', marginTop: 8 }}>
-                            <InputNumber
-                                style={{ flex: 1 }}
+                        <div className="flex gap-2">
+                            <input
+                                type="number"
+                                className={`${fieldInputClass} flex-1`}
                                 min={1990}
                                 max={2100}
-                                value={numberAnswer ?? undefined}
-                                onChange={v => setNumberAnswer(typeof v === 'number' ? v : null)}
+                                value={numberAnswer ?? ''}
+                                onChange={e => {
+                                    const v = e.target.value;
+                                    setNumberAnswer(v === '' ? null : Number(v));
+                                }}
+                                placeholder="เช่น 1995"
+                                inputMode="numeric"
                             />
-                            <Button type="primary" loading={submitting} onClick={handleNumberSubmit}>
+                            <button
+                                type="button"
+                                className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl bg-primaryFS-500 px-4 text-sm font-semibold text-white transition hover:bg-primaryFS-400 disabled:opacity-40"
+                                disabled={submitting || numberAnswer == null}
+                                onClick={handleNumberSubmit}>
                                 ถัดไป
-                            </Button>
-                        </Space>
+                            </button>
+                        </div>
                     )}
                 </div>
             )}
             {session?.is_complete && (
-                <div style={{ padding: 12, borderTop: '1px solid #f0f0f0' }}>
-                    <Button type="primary" block onClick={() => onComplete(null)}>
+                <div className="mt-auto shrink-0 border-t border-blackFS-600 pt-3">
+                    <button type="button" className={primaryButtonClass} onClick={() => onComplete(null)}>
                         เริ่มสนทนา
-                    </Button>
+                    </button>
                 </div>
             )}
         </div>
