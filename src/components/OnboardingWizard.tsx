@@ -138,27 +138,6 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
         setNumberAnswer(null);
     };
 
-    const appendExchange = (userContent: string, next: OnboardingSession) => {
-        const nextMsgs: AssistantMessage[] = [
-            ...messages,
-            { id: `user-${step?.step_id}-${Date.now()}`, role: 'user', content: userContent },
-        ];
-        if (next.is_complete) {
-            nextMsgs.push({
-                id: 'onboarding-done',
-                role: 'assistant',
-                content: DONE_MESSAGE,
-            });
-        } else if (next.current_step) {
-            nextMsgs.push({
-                id: `onboarding-${next.current_step.step_id}`,
-                role: 'assistant',
-                content: next.current_step.prompt_th,
-            });
-        }
-        setMessages(nextMsgs);
-    };
-
     const finishFlow = async () => {
         try {
             const oc = await onboardingApi.getOutcome(fsAiUserId);
@@ -174,8 +153,14 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
         display: string
     ) => {
         if (!step || submitting) return;
+        const loadingId = `loading-${Date.now()}`;
         setSubmitting(true);
         setError(null);
+        setMessages(prev => [
+            ...prev,
+            { id: `user-${step.step_id}-${Date.now()}`, role: 'user', content: display },
+            { id: loadingId, role: 'assistant', content: '' },
+        ]);
         try {
             const next = await onboardingApi.submitAnswer(
                 fsAiUserId,
@@ -185,11 +170,31 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
             );
             setSession(next);
             resetInputs();
-            appendExchange(display, next);
+            setMessages(prev => {
+                const withoutLoading = prev.filter(m => m.id !== loadingId);
+                if (next.is_complete) {
+                    return [
+                        ...withoutLoading,
+                        { id: 'onboarding-done', role: 'assistant', content: DONE_MESSAGE },
+                    ];
+                }
+                if (next.current_step) {
+                    return [
+                        ...withoutLoading,
+                        {
+                            id: `onboarding-${next.current_step.step_id}`,
+                            role: 'assistant',
+                            content: next.current_step.prompt_th,
+                        },
+                    ];
+                }
+                return withoutLoading;
+            });
             if (next.is_complete) {
                 await finishFlow();
             }
         } catch (e) {
+            setMessages(prev => prev.filter(m => m.id !== loadingId));
             setError(e instanceof Error ? e.message : 'ส่งคำตอบไม่สำเร็จ');
         } finally {
             setSubmitting(false);

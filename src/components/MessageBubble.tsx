@@ -6,6 +6,7 @@ import rehypeKatex from 'rehype-katex';
 import { sanitizeAssistantMarkdown, visibleStripped } from '../helpers/sanitizeAssistantMarkdown';
 import { filterDisplayableAssistantSources } from '../helpers/filterAssistantSources';
 import { AssistantMessage } from '../types/learningAssistant';
+import { TypingIndicator } from './TypingIndicator';
 
 interface MdastNode {
     type: string;
@@ -86,12 +87,15 @@ const markdownComponents: React.ComponentProps<typeof ReactMarkdown>['components
 
 export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
     const isUser = message.role === 'user';
+    const isWaiting = !isUser && visibleStripped(message.content).length === 0;
     const displaySources = filterDisplayableAssistantSources(message.sources) ?? [];
     return (
         <div
             className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${isUser ? 'ml-auto rounded-br-sm bg-primaryFS-500 text-white' : 'mr-auto rounded-bl-sm bg-blackFS-600 text-blackFS-100'}`}>
             {isUser ? (
                 <div className="whitespace-pre-wrap">{message.content}</div>
+            ) : isWaiting ? (
+                <TypingIndicator />
             ) : (
                 <ReactMarkdown
                     remarkPlugins={[remarkGfm, remarkMath, pruneEmptyListItems]}
