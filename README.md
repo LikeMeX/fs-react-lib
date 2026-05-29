@@ -64,7 +64,11 @@ export default function MyApp({ Component, pageProps }) {
                     <QueryClientProvider client={queryClient}>
                         <AssistantContextProvider>
                             <Component {...pageProps} />
-                            <LearningAssistantShell isLoggedIn={isLoggedIn} pathname={router.pathname}>
+                            <LearningAssistantShell
+                                isLoggedIn={isLoggedIn}
+                                pathname={router.pathname}
+                                userMember={assistantUserMember}
+                            >
                                 {/* app routes */}
                             </LearningAssistantShell>
                         </AssistantContextProvider>

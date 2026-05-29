@@ -152,11 +152,16 @@ const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapte
         ensureReady &&
         !!fsAiUserId &&
         (!onboardingComplete || profileEditOpen);
+    /** SkillPass needs fs-ai user id from ensure; without host userMember we still allow general chat. */
+    const skillpassConversationReady = !skillpassOn ||
+        !!fsAiUserId ||
+        ensureEndpointUnavailable ||
+        !userMember;
     const convQuery = (0, useAssistantConversation_1.useAssistantConversation)(courseId, selectedMode ?? initialMode, allowed &&
         configured &&
         ensureReady &&
         !inSkillpassOnboarding &&
-        (!skillpassOn || !!fsAiUserId || ensureEndpointUnavailable), {
+        skillpassConversationReady, {
         pinnedConversationId: pinnedConversationId,
         sessionKey,
         fsAiUserId,

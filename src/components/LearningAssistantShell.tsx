@@ -1,6 +1,7 @@
 import React from 'react';
 import { canShowAssistant } from '../helpers/assistantAuthGate';
 import { useAssistantVisibilityGate } from '../hooks/useAssistantVisibilityGate';
+import { AssistantUserMember } from '../types/learningAssistant';
 import { AssistantNavButton } from './AssistantNavButton';
 import { AssistantPanel } from './AssistantPanel';
 
@@ -10,6 +11,8 @@ export interface LearningAssistantShellProps {
     /** When true (default), user must be logged in. Set false for fs-ecommerce guest chat. */
     requireAuth?: boolean;
     isLoggedIn?: boolean;
+    /** Decoded JWT / member profile for SkillPass ensure + metadata. */
+    userMember?: AssistantUserMember;
 }
 
 /**
@@ -21,6 +24,7 @@ export const LearningAssistantShell: React.FC<LearningAssistantShellProps> = ({
     children,
     requireAuth = true,
     isLoggedIn = false,
+    userMember,
 }) => {
     const assistantVisible = canShowAssistant({ pathname, requireAuth, isLoggedIn });
     useAssistantVisibilityGate(assistantVisible);
@@ -28,8 +32,8 @@ export const LearningAssistantShell: React.FC<LearningAssistantShellProps> = ({
     return (
         <>
             {children}
-            <AssistantNavButton floating canUse={assistantVisible} />
-            <AssistantPanel surface="general" canUse={assistantVisible} />
+            <AssistantNavButton floating canUse={assistantVisible} userMember={userMember} />
+            <AssistantPanel surface="general" canUse={assistantVisible} userMember={userMember} />
         </>
     );
 };

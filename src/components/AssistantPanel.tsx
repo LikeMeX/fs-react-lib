@@ -212,6 +212,13 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
         !!fsAiUserId &&
         (!onboardingComplete || profileEditOpen);
 
+    /** SkillPass needs fs-ai user id from ensure; without host userMember we still allow general chat. */
+    const skillpassConversationReady =
+        !skillpassOn ||
+        !!fsAiUserId ||
+        ensureEndpointUnavailable ||
+        !userMember;
+
     const convQuery = useAssistantConversation(
         courseId,
         selectedMode ?? initialMode,
@@ -219,7 +226,7 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
             configured &&
             ensureReady &&
             !inSkillpassOnboarding &&
-            (!skillpassOn || !!fsAiUserId || ensureEndpointUnavailable),
+            skillpassConversationReady,
         {
             pinnedConversationId: pinnedConversationId,
             sessionKey,
