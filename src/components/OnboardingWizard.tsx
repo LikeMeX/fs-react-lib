@@ -5,6 +5,7 @@ import { AssistantMessage } from '../types/learningAssistant';
 import {
     OnboardingOutcome,
     OnboardingSession,
+    OnboardingStep,
     UserProfileOut,
     onboardingApi,
 } from '../services/onboardingApi';
@@ -34,6 +35,44 @@ const secondaryButtonClass =
 
 const fieldInputClass =
     'w-full min-h-11 rounded-xl border border-blackFS-500 bg-blackFS-700 px-3.5 py-2.5 text-sm text-blackFS-100 placeholder-blackFS-300 transition focus:border-primaryFS-400 focus:outline-none focus:ring-2 focus:ring-primaryFS-500/40 disabled:cursor-not-allowed disabled:opacity-50';
+
+const suggestionChipClass =
+    'inline-flex min-h-9 touch-manipulation items-center rounded-full border border-blackFS-500 bg-blackFS-700/90 px-3 py-1.5 text-xs font-medium text-blackFS-200 transition duration-150 ease-out hover:border-primaryFS-400 hover:bg-blackFS-600 hover:text-blackFS-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primaryFS-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-blackFS-800 disabled:cursor-not-allowed disabled:opacity-50';
+
+function isTextPrimaryStep(inputType: string): boolean {
+    return (
+        inputType === 'text' ||
+        inputType === 'required_text' ||
+        inputType === 'single_select' ||
+        inputType === 'text_with_suggestions'
+    );
+}
+
+function shouldUseTextPrimary(step: OnboardingStep): boolean {
+    if (
+        step.input_type === 'multi_select' ||
+        step.input_type === 'number' ||
+        step.input_type === 'optional_text'
+    ) {
+        return false;
+    }
+    if (isTextPrimaryStep(step.input_type)) return true;
+    return Boolean(step.options?.length);
+}
+
+function textPlaceholderForStep(stepId: string): string {
+    const id = stepId.toLowerCase();
+    if (id.includes('target') || id.includes('role') || id.includes('job')) {
+        return 'พิมพ์ตำแหน่งหรือสายงานที่สนใจ เช่น Data Analyst';
+    }
+    if (id.includes('industry')) {
+        return 'พิมพ์อุตสาหกรรมหรือสายงานของคุณ';
+    }
+    if (id.includes('current')) {
+        return 'พิมพ์ตำแหน่งงานปัจจุบันของคุณ';
+    }
+    return 'พิมพ์คำตอบของคุณ';
+}
 
 export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
     fsAiUserId,
@@ -185,8 +224,58 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
         );
     };
 
+    const textPrimaryComposer = useMemo(() => {
+        if (!step || !shouldUseTextPrimary(step)) return null;
+        const suggestions = step.options ?? [];
+        return (
+            <div className="flex flex-col gap-3">
+                <input
+                    type="text"
+                    className={fieldInputClass}
+                    value={textAnswer}
+                    onChange={e => setTextAnswer(e.target.value)}
+                    onKeyDown={e => {
+                        if (e.key === 'Enter') handleTextSubmit();
+                    }}
+                    placeholder={textPlaceholderForStep(step.step_id)}
+                    disabled={submitting}
+                    autoFocus
+                />
+                <button
+                    type="button"
+                    className={primaryButtonClass}
+                    disabled={submitting || !textAnswer.trim()}
+                    onClick={handleTextSubmit}>
+                    {submitting ? (
+                        <LuLoader size={18} className="animate-spin" aria-hidden />
+                    ) : (
+                        'ถัดไป'
+                    )}
+                </button>
+                {suggestions.length > 0 ? (
+                    <div className="flex flex-col gap-2">
+                        <p className="m-0 text-xs text-blackFS-300">หรือเลือกตัวอย่าง</p>
+                        <div className="flex flex-wrap gap-2">
+                            {suggestions.map(o => (
+                                <button
+                                    key={o.id}
+                                    type="button"
+                                    disabled={submitting}
+                                    onClick={() => handleSingleSelect(o.id, o.label)}
+                                    className={suggestionChipClass}>
+                                    {o.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                ) : null}
+            </div>
+        );
+    }, [step, textAnswer, submitting]);
+
     const optionButtons = useMemo(() => {
         if (!step?.options?.length) return null;
+        if (shouldUseTextPrimary(step)) return null;
         if (step.input_type === 'multi_select') {
             const overMax =
                 step.max_selections != null && multiSelected.length > step.max_selections;
@@ -273,6 +362,39 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
         );
     }, [step, multiSelected, otherText, submitting]);
 
+    const plainTextComposer = useMemo(() => {
+        if (!step || step.input_type === 'optional_text' || step.input_type === 'number') return null;
+        if (step.options?.length || shouldUseTextPrimary(step)) return null;
+        if (step.input_type !== 'text' && step.input_type !== 'required_text') return null;
+        return (
+            <div className="flex flex-col gap-3">
+                <input
+                    type="text"
+                    className={fieldInputClass}
+                    value={textAnswer}
+                    onChange={e => setTextAnswer(e.target.value)}
+                    onKeyDown={e => {
+                        if (e.key === 'Enter') handleTextSubmit();
+                    }}
+                    placeholder={textPlaceholderForStep(step.step_id)}
+                    disabled={submitting}
+                    autoFocus
+                />
+                <button
+                    type="button"
+                    className={primaryButtonClass}
+                    disabled={submitting || !textAnswer.trim()}
+                    onClick={handleTextSubmit}>
+                    {submitting ? (
+                        <LuLoader size={18} className="animate-spin" aria-hidden />
+                    ) : (
+                        'ถัดไป'
+                    )}
+                </button>
+            </div>
+        );
+    }, [step, textAnswer, submitting]);
+
     if (loading) {
         return (
             <div className="flex flex-1 items-center justify-center py-12">
@@ -309,6 +431,8 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
             ) : null}
             {showComposer && (
                 <div className="mt-auto shrink-0 border-t border-blackFS-600 pt-3">
+                    {textPrimaryComposer}
+                    {plainTextComposer}
                     {optionButtons}
                     {step?.input_type === 'optional_text' && (
                         <div className="flex flex-col gap-2">
