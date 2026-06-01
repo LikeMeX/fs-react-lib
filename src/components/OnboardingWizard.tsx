@@ -18,7 +18,8 @@ const LuLoader = LuLoaderRaw as unknown as IconFC;
 export interface OnboardingWizardProps {
     fsAiUserId: string;
     restart?: boolean;
-    onComplete: (profile: UserProfileOut | null | undefined) => void;
+    /** Called when onboarding is finished or user continues after a completed session. */
+    onComplete: (profile?: UserProfileOut | null) => void;
 }
 
 const DONE_MESSAGE =
@@ -180,7 +181,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
         } catch {
             /* outcome optional for UI */
         }
-        onComplete(null);
+        onComplete();
     };
 
     const submit = async (
@@ -538,7 +539,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
             )}
             {session?.is_complete && (
                 <div className="mt-auto shrink-0 border-t border-blackFS-600 pt-3">
-                    <button type="button" className={primaryButtonClass} onClick={() => onComplete(null)}>
+                    <button type="button" className={primaryButtonClass} onClick={() => onComplete()}>
                         เริ่มสนทนา
                     </button>
                 </div>

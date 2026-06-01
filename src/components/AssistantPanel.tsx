@@ -63,6 +63,7 @@ import {
     userProfileOutToAssistant,
     writeAssistantUserProfile,
 } from '../helpers/assistantUserProfile';
+import { hasDisplayableAssistantProfile } from '../helpers/assistantProfileDisplay';
 import {
     isSkillpassOnboardingEnabled,
     oauthClaimsFromUserMember,
@@ -82,6 +83,7 @@ import { ASSISTANT_PANEL_WIDTH } from './constants';
 import { Composer } from './Composer';
 import { MessageList } from './MessageList';
 import { OnboardingWizard } from './OnboardingWizard';
+import { AssistantProfileCard } from './AssistantProfileCard';
 import { ModePicker } from './ModePicker';
 import { SuggestedActions } from './SuggestedActions';
 import { WelcomeMessage } from './WelcomeMessage';
@@ -206,15 +208,23 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
     const [ensureEndpointUnavailable, setEnsureEndpointUnavailable] = useState(false);
     const [onboardingComplete, setOnboardingComplete] = useState(!skillpassOn);
     const [serverUserProfile, setServerUserProfile] = useState<UserProfileOut | null>(null);
+    const [profileSummaryTh, setProfileSummaryTh] = useState<string | null>(null);
 
     const allowed = canUse ?? canUseLearningAssistant(userMember);
     const configured = isFsAiApiConfigured();
 
+    const effectiveProfile = useMemo<AssistantUserProfile | null>(
+        () => userProfile ?? userProfileOutToAssistant(serverUserProfile),
+        [userProfile, serverUserProfile]
+    );
+
+    const hasSavedProfile = hasDisplayableAssistantProfile(effectiveProfile);
+
+    const needsSkillpassOnboarding =
+        skillpassOn && ensureReady && !!fsAiUserId && !onboardingComplete && !hasSavedProfile;
+
     const inSkillpassOnboarding =
-        skillpassOn &&
-        ensureReady &&
-        !!fsAiUserId &&
-        (!onboardingComplete || profileEditOpen);
+        needsSkillpassOnboarding || (skillpassOn && ensureReady && !!fsAiUserId && profileEditOpen);
 
     /** SkillPass needs fs-ai user id from ensure; without host userMember we still allow general chat. */
     const skillpassConversationReady =
@@ -284,7 +294,13 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
                 setOnboardingComplete(res.onboarding_complete);
                 setServerUserProfile(res.user_profile ?? null);
                 const mapped = userProfileOutToAssistant(res.user_profile);
-                if (mapped) setUserProfile(mapped);
+                if (mapped) {
+                    setUserProfile(mapped);
+                    writeAssistantUserProfile(mapped);
+                }
+                if (res.onboarding_complete) {
+                    setOnboardingComplete(true);
+                }
             } catch (e) {
                 if (!cancelled) {
                     const status = axios.isAxiosError(e) ? e.response?.status : undefined;
@@ -308,11 +324,20 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
     }, [profileLoaded, skillpassOn, userMember]);
 
     const profileComplete = skillpassOn
-        ? onboardingComplete
+        ? onboardingComplete || hasSavedProfile
         : isAssistantUserProfileComplete(userProfile);
     const inLegacyProfileChat =
         !skillpassOn && profileLoaded && (!profileComplete || profileEditOpen);
     const inProfileChat = inLegacyProfileChat;
+
+    const showSkillpassProfileCard =
+        skillpassOn &&
+        ensureReady &&
+        !!fsAiUserId &&
+        !inSkillpassOnboarding &&
+        !inProfileChat &&
+        hasSavedProfile &&
+        effectiveProfile != null;
     const currentProfileStep: ProfileStep | null =
         inProfileChat && profileStepIdx < PROFILE_STEPS.length ? PROFILE_STEPS[profileStepIdx] : null;
 
@@ -397,15 +422,39 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
         setOnboardingComplete(res.onboarding_complete);
         setServerUserProfile(res.user_profile ?? null);
         const mapped = userProfileOutToAssistant(res.user_profile);
-        if (mapped) setUserProfile(mapped);
+        if (mapped) {
+            setUserProfile(mapped);
+            writeAssistantUserProfile(mapped);
+        }
+        if (res.onboarding_complete) {
+            setOnboardingComplete(true);
+        }
     }, [userMember]);
 
     const handleOnboardingComplete = useCallback(() => {
         setProfileEditOpen(false);
-        void refreshEnsureUser().catch(() => {
-            setOnboardingComplete(true);
-        });
+        setOnboardingComplete(true);
+        void refreshEnsureUser().catch(() => undefined);
     }, [refreshEnsureUser]);
+
+    useEffect(() => {
+        if (!skillpassOn || !fsAiUserId || !onboardingComplete || profileEditOpen || !hasSavedProfile) {
+            setProfileSummaryTh(null);
+            return;
+        }
+        let cancelled = false;
+        void onboardingApi
+            .getOutcome(fsAiUserId)
+            .then(oc => {
+                if (!cancelled) setProfileSummaryTh(oc.starter_profile.summary_th ?? null);
+            })
+            .catch(() => {
+                if (!cancelled) setProfileSummaryTh(null);
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, [skillpassOn, fsAiUserId, onboardingComplete, profileEditOpen, hasSavedProfile]);
 
     const startProfileEdit = useCallback(() => {
         if (skillpassOn) {
@@ -772,7 +821,7 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
                         {inSkillpassOnboarding && fsAiUserId ? (
                             <OnboardingWizard
                                 fsAiUserId={fsAiUserId}
-                                restart={profileEditOpen && onboardingComplete}
+                                restart={profileEditOpen && (onboardingComplete || hasSavedProfile)}
                                 onComplete={handleOnboardingComplete}
                             />
                         ) : inProfileChat ? (
@@ -787,6 +836,13 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
                             />
                         ) : (
                             <>
+                                {showSkillpassProfileCard && effectiveProfile ? (
+                                    <AssistantProfileCard
+                                        profile={effectiveProfile}
+                                        summary={profileSummaryTh}
+                                        onEdit={startProfileEdit}
+                                    />
+                                ) : null}
                                 {messages.length === 0 ? (
                                     <WelcomeMessage mode={apiMode} />
                                 ) : (

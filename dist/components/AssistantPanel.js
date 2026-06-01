@@ -59,6 +59,7 @@ const assistantConversationHistory_1 = require("../helpers/assistantConversation
 const canUseLearningAssistant_1 = require("../helpers/canUseLearningAssistant");
 const buildLearningMetadata_1 = require("../helpers/buildLearningMetadata");
 const assistantUserProfile_1 = require("../helpers/assistantUserProfile");
+const assistantProfileDisplay_1 = require("../helpers/assistantProfileDisplay");
 const oauthUserEnsure_1 = require("../helpers/oauthUserEnsure");
 const mapApiConversationHistory_1 = require("../helpers/mapApiConversationHistory");
 const useAssistantConversation_1 = require("../hooks/useAssistantConversation");
@@ -70,6 +71,7 @@ const constants_1 = require("./constants");
 const Composer_1 = require("./Composer");
 const MessageList_1 = require("./MessageList");
 const OnboardingWizard_1 = require("./OnboardingWizard");
+const AssistantProfileCard_1 = require("./AssistantProfileCard");
 const ModePicker_1 = require("./ModePicker");
 const SuggestedActions_1 = require("./SuggestedActions");
 const WelcomeMessage_1 = require("./WelcomeMessage");
@@ -149,12 +151,13 @@ const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapte
     const [ensureEndpointUnavailable, setEnsureEndpointUnavailable] = (0, react_1.useState)(false);
     const [onboardingComplete, setOnboardingComplete] = (0, react_1.useState)(!skillpassOn);
     const [serverUserProfile, setServerUserProfile] = (0, react_1.useState)(null);
+    const [profileSummaryTh, setProfileSummaryTh] = (0, react_1.useState)(null);
     const allowed = canUse ?? (0, canUseLearningAssistant_1.canUseLearningAssistant)(userMember);
     const configured = (0, canUseLearningAssistant_1.isFsAiApiConfigured)();
-    const inSkillpassOnboarding = skillpassOn &&
-        ensureReady &&
-        !!fsAiUserId &&
-        (!onboardingComplete || profileEditOpen);
+    const effectiveProfile = (0, react_1.useMemo)(() => userProfile ?? (0, assistantUserProfile_1.userProfileOutToAssistant)(serverUserProfile), [userProfile, serverUserProfile]);
+    const hasSavedProfile = (0, assistantProfileDisplay_1.hasDisplayableAssistantProfile)(effectiveProfile);
+    const needsSkillpassOnboarding = skillpassOn && ensureReady && !!fsAiUserId && !onboardingComplete && !hasSavedProfile;
+    const inSkillpassOnboarding = needsSkillpassOnboarding || (skillpassOn && ensureReady && !!fsAiUserId && profileEditOpen);
     /** SkillPass needs fs-ai user id from ensure; without host userMember we still allow general chat. */
     const skillpassConversationReady = !skillpassOn ||
         !!fsAiUserId ||
@@ -214,8 +217,13 @@ const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapte
                 setOnboardingComplete(res.onboarding_complete);
                 setServerUserProfile(res.user_profile ?? null);
                 const mapped = (0, assistantUserProfile_1.userProfileOutToAssistant)(res.user_profile);
-                if (mapped)
+                if (mapped) {
                     setUserProfile(mapped);
+                    (0, assistantUserProfile_1.writeAssistantUserProfile)(mapped);
+                }
+                if (res.onboarding_complete) {
+                    setOnboardingComplete(true);
+                }
             }
             catch (e) {
                 if (!cancelled) {
@@ -240,10 +248,17 @@ const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapte
         };
     }, [profileLoaded, skillpassOn, userMember]);
     const profileComplete = skillpassOn
-        ? onboardingComplete
+        ? onboardingComplete || hasSavedProfile
         : (0, assistantUserProfile_1.isAssistantUserProfileComplete)(userProfile);
     const inLegacyProfileChat = !skillpassOn && profileLoaded && (!profileComplete || profileEditOpen);
     const inProfileChat = inLegacyProfileChat;
+    const showSkillpassProfileCard = skillpassOn &&
+        ensureReady &&
+        !!fsAiUserId &&
+        !inSkillpassOnboarding &&
+        !inProfileChat &&
+        hasSavedProfile &&
+        effectiveProfile != null;
     const currentProfileStep = inProfileChat && profileStepIdx < PROFILE_STEPS.length ? PROFILE_STEPS[profileStepIdx] : null;
     const profileChatMessages = (0, react_1.useMemo)(() => {
         if (!inProfileChat)
@@ -323,15 +338,39 @@ const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapte
         setOnboardingComplete(res.onboarding_complete);
         setServerUserProfile(res.user_profile ?? null);
         const mapped = (0, assistantUserProfile_1.userProfileOutToAssistant)(res.user_profile);
-        if (mapped)
+        if (mapped) {
             setUserProfile(mapped);
+            (0, assistantUserProfile_1.writeAssistantUserProfile)(mapped);
+        }
+        if (res.onboarding_complete) {
+            setOnboardingComplete(true);
+        }
     }, [userMember]);
     const handleOnboardingComplete = (0, react_1.useCallback)(() => {
         setProfileEditOpen(false);
-        void refreshEnsureUser().catch(() => {
-            setOnboardingComplete(true);
-        });
+        setOnboardingComplete(true);
+        void refreshEnsureUser().catch(() => undefined);
     }, [refreshEnsureUser]);
+    (0, react_1.useEffect)(() => {
+        if (!skillpassOn || !fsAiUserId || !onboardingComplete || profileEditOpen || !hasSavedProfile) {
+            setProfileSummaryTh(null);
+            return;
+        }
+        let cancelled = false;
+        void onboardingApi_1.onboardingApi
+            .getOutcome(fsAiUserId)
+            .then(oc => {
+            if (!cancelled)
+                setProfileSummaryTh(oc.starter_profile.summary_th ?? null);
+        })
+            .catch(() => {
+            if (!cancelled)
+                setProfileSummaryTh(null);
+        });
+        return () => {
+            cancelled = true;
+        };
+    }, [skillpassOn, fsAiUserId, onboardingComplete, profileEditOpen, hasSavedProfile]);
     const startProfileEdit = (0, react_1.useCallback)(() => {
         if (skillpassOn) {
             setProfileEditOpen(true);
@@ -615,8 +654,9 @@ const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapte
                 streamError && (react_1.default.createElement(antd_1.Alert, { type: "error", message: streamError, className: "mb-3", showIcon: true, closable: true })),
                 historyError && (react_1.default.createElement(antd_1.Alert, { type: "warning", message: historyError, className: "mb-3", showIcon: true, closable: true, onClose: () => setHistoryError(null) })),
                 ensureError && (react_1.default.createElement(antd_1.Alert, { type: "error", message: ensureError, className: "mb-3", showIcon: true, closable: true, onClose: () => setEnsureError(null) })),
-                react_1.default.createElement("div", { className: `flex min-h-0 flex-1 flex-col ${inSkillpassOnboarding || inProfileChat ? 'overflow-hidden' : 'overflow-y-auto'}` }, inSkillpassOnboarding && fsAiUserId ? (react_1.default.createElement(OnboardingWizard_1.OnboardingWizard, { fsAiUserId: fsAiUserId, restart: profileEditOpen && onboardingComplete, onComplete: handleOnboardingComplete })) : inProfileChat ? (react_1.default.createElement("div", { className: "flex min-h-0 flex-1 flex-col overflow-hidden" },
+                react_1.default.createElement("div", { className: `flex min-h-0 flex-1 flex-col ${inSkillpassOnboarding || inProfileChat ? 'overflow-hidden' : 'overflow-y-auto'}` }, inSkillpassOnboarding && fsAiUserId ? (react_1.default.createElement(OnboardingWizard_1.OnboardingWizard, { fsAiUserId: fsAiUserId, restart: profileEditOpen && (onboardingComplete || hasSavedProfile), onComplete: handleOnboardingComplete })) : inProfileChat ? (react_1.default.createElement("div", { className: "flex min-h-0 flex-1 flex-col overflow-hidden" },
                     react_1.default.createElement(MessageList_1.MessageList, { messages: profileChatMessages }))) : showPicker ? (react_1.default.createElement(ModePicker_1.ModePicker, { disabled: !conversationId || convQuery.isLoading, modes: allowedModes, onSelect: mode => setSelectedMode(mode) })) : (react_1.default.createElement(react_1.default.Fragment, null,
+                    showSkillpassProfileCard && effectiveProfile ? (react_1.default.createElement(AssistantProfileCard_1.AssistantProfileCard, { profile: effectiveProfile, summary: profileSummaryTh, onEdit: startProfileEdit })) : null,
                     messages.length === 0 ? (react_1.default.createElement(WelcomeMessage_1.WelcomeMessage, { mode: apiMode })) : (react_1.default.createElement(MessageList_1.MessageList, { messages: messages })),
                     react_1.default.createElement(SuggestedActions_1.SuggestedActions, { mode: apiMode, actions: suggestedActions, disabled: streaming || !conversationId, onSelect: (message, actionIntent) => {
                             void handleSend(message, actionIntent);
