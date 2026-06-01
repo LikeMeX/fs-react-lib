@@ -1,46 +1,64 @@
-import { useQuery } from '@tanstack/react-query';
+import { useCallback, useEffect, useState } from 'react';
 import { fsAiApi } from '../services/fsAiApi';
 import { LearningModeApi } from '../types/learningAssistant';
 
 export interface UseAssistantConversationOptions {
-    /** When set, skips creating a conversation and uses this id (e.g. picked from local history). */
-    pinnedConversationId: string | null;
-    /** Increment to force a new server conversation (new chat). */
-    sessionKey: number;
+    /** When set, skips creating a conversation and uses this id (e.g. picked from history). */
+    pinnedConversationId?: string | null;
+    /** Increment to discard the in-memory draft conversation (new chat). */
+    sessionKey?: number;
     /** fs-ai user id from POST /users/ensure — attached to new conversations when set. */
     fsAiUserId?: string | null;
 }
 
 export function useAssistantConversation(
-    courseId: number | null,
-    initialMode: LearningModeApi,
-    enabled: boolean,
+    _courseId: number | null,
+    learningMode: LearningModeApi,
+    _enabled: boolean,
     options?: UseAssistantConversationOptions
 ) {
     const pinned = options?.pinnedConversationId ?? null;
     const sessionKey = options?.sessionKey ?? 0;
     const fsAiUserId = options?.fsAiUserId ?? null;
 
-    const query = useQuery({
-        queryKey: ['fs-ai-conversation', courseId ?? 'none', initialMode, sessionKey, fsAiUserId],
-        queryFn: async () => {
+    const [draftConversationId, setDraftConversationId] = useState<string | null>(null);
+    const [isCreating, setIsCreating] = useState(false);
+    const [createError, setCreateError] = useState<Error | null>(null);
+
+    useEffect(() => {
+        setDraftConversationId(null);
+        setCreateError(null);
+    }, [sessionKey, pinned]);
+
+    const conversationId = pinned ?? draftConversationId;
+
+    const ensureConversation = useCallback(async (): Promise<string> => {
+        if (pinned) return pinned;
+        if (draftConversationId) return draftConversationId;
+
+        setIsCreating(true);
+        setCreateError(null);
+        try {
             const res = await fsAiApi.createConversation({
-                learning_mode: initialMode,
+                learning_mode: learningMode,
                 ...(fsAiUserId ? { user_id: fsAiUserId } : {}),
             });
+            setDraftConversationId(res.id);
             return res.id;
-        },
-        enabled: Boolean(enabled && !pinned),
-        staleTime: 5 * 60 * 1000,
-        retry: 1,
-    });
-
-    const conversationId = pinned ?? query.data ?? null;
+        } catch (e) {
+            const err = e instanceof Error ? e : new Error('CREATE_CONVERSATION_FAILED');
+            setCreateError(err);
+            throw err;
+        } finally {
+            setIsCreating(false);
+        }
+    }, [pinned, draftConversationId, learningMode, fsAiUserId]);
 
     return {
-        ...query,
         data: conversationId,
-        isLoading: pinned ? false : query.isLoading,
-        isError: pinned ? false : query.isError,
+        ensureConversation,
+        isLoading: isCreating,
+        isError: createError != null,
+        error: createError,
     };
 }

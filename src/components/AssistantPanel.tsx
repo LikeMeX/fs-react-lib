@@ -249,6 +249,15 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
         }
     );
     const conversationId = convQuery.data ?? null;
+    const { ensureConversation, isLoading: isCreatingConversation } = convQuery;
+
+    const chatInputReady =
+        allowed &&
+        configured &&
+        ensureReady &&
+        !inSkillpassOnboarding &&
+        skillpassConversationReady &&
+        !isCreatingConversation;
 
     const { apiMode, lastError } = useAssistantPhase({
         route: surface,
@@ -547,7 +556,7 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
 
     useEffect(() => {
         reset();
-    }, [conversationId, reset]);
+    }, [pinnedConversationId, sessionKey, reset]);
 
     useEffect(() => {
         if (!pinnedConversationId || pinnedConversationId !== conversationId) return;
@@ -666,7 +675,18 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
 
     const handleSend = useCallback(
         async (text: string, actionIntent?: string) => {
-            if (!conversationId || !allowed) return;
+            if (!allowed || !chatInputReady) return;
+            if (!singleMode && !selectedMode && !pinnedConversationId) return;
+
+            let activeConversationId = conversationId;
+            if (!activeConversationId) {
+                try {
+                    activeConversationId = await ensureConversation();
+                } catch {
+                    return;
+                }
+            }
+
             const ts = getVideoTimestamp?.() ?? undefined;
             const metadata = buildLearningMetadata({
                 userMember,
@@ -688,26 +708,28 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
             });
             const title = previewTitle(text);
             if (fsAiUserId) {
-                void fsAiApi.updateConversationTitle(conversationId, title).catch(() => {
+                void fsAiApi.updateConversationTitle(activeConversationId, title).catch(() => {
                     /* title sync is best-effort */
                 });
                 setHistoryRefresh(n => n + 1);
             } else {
                 upsertAssistantConversation({
-                    id: conversationId,
+                    id: activeConversationId,
                     courseId: courseId ?? null,
                     surface,
                     title,
                 });
                 setHistoryRefresh(n => n + 1);
             }
-            await send(conversationId, { message: text, metadata });
+            await send(activeConversationId, { message: text, metadata });
         },
         [
             allowed,
+            chatInputReady,
             apiMode,
             chapterId,
             conversationId,
+            ensureConversation,
             courseComplete,
             courseId,
             getVideoTimestamp,
@@ -716,7 +738,10 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
             learningPathId,
             learningPathName,
             additionalContext,
+            pinnedConversationId,
+            selectedMode,
             send,
+            singleMode,
             surface,
             fsAiUserId,
             serverUserProfile,
@@ -837,7 +862,7 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
                             </div>
                         ) : showPicker ? (
                             <ModePicker
-                                disabled={!conversationId || convQuery.isLoading}
+                                disabled={!chatInputReady}
                                 modes={allowedModes}
                                 onSelect={mode => setSelectedMode(mode)}
                             />
@@ -851,7 +876,7 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
                                 <SuggestedActions
                                     mode={apiMode}
                                     actions={suggestedActions}
-                                    disabled={streaming || !conversationId}
+                                    disabled={streaming || !chatInputReady || isCreatingConversation}
                                     onSelect={(message, actionIntent) => {
                                         void handleSend(message, actionIntent);
                                     }}
@@ -865,9 +890,9 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
                                 disabled={
                                     inProfileChat
                                         ? !currentProfileStep
-                                        : !conversationId || convQuery.isLoading
+                                        : !chatInputReady
                                 }
-                                loading={inProfileChat ? false : streaming}
+                                loading={inProfileChat ? false : streaming || isCreatingConversation}
                                 onSend={text => {
                                     if (inProfileChat) {
                                         handleProfileAnswer(text);

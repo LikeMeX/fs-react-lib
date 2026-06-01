@@ -174,6 +174,13 @@ const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapte
         fsAiUserId,
     });
     const conversationId = convQuery.data ?? null;
+    const { ensureConversation, isLoading: isCreatingConversation } = convQuery;
+    const chatInputReady = allowed &&
+        configured &&
+        ensureReady &&
+        !inSkillpassOnboarding &&
+        skillpassConversationReady &&
+        !isCreatingConversation;
     const { apiMode, lastError } = (0, useAssistantPhase_1.useAssistantPhase)({
         route: surface,
         conversationId,
@@ -464,7 +471,7 @@ const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapte
     }, [historyOpen]);
     (0, react_1.useEffect)(() => {
         reset();
-    }, [conversationId, reset]);
+    }, [pinnedConversationId, sessionKey, reset]);
     (0, react_1.useEffect)(() => {
         if (!pinnedConversationId || pinnedConversationId !== conversationId)
             return;
@@ -573,8 +580,19 @@ const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapte
         });
     }, []);
     const handleSend = (0, react_1.useCallback)(async (text, actionIntent) => {
-        if (!conversationId || !allowed)
+        if (!allowed || !chatInputReady)
             return;
+        if (!singleMode && !selectedMode && !pinnedConversationId)
+            return;
+        let activeConversationId = conversationId;
+        if (!activeConversationId) {
+            try {
+                activeConversationId = await ensureConversation();
+            }
+            catch {
+                return;
+            }
+        }
         const ts = getVideoTimestamp?.() ?? undefined;
         const metadata = (0, buildLearningMetadata_1.buildLearningMetadata)({
             userMember,
@@ -595,26 +613,28 @@ const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapte
         });
         const title = previewTitle(text);
         if (fsAiUserId) {
-            void fsAiApi_1.fsAiApi.updateConversationTitle(conversationId, title).catch(() => {
+            void fsAiApi_1.fsAiApi.updateConversationTitle(activeConversationId, title).catch(() => {
                 /* title sync is best-effort */
             });
             setHistoryRefresh(n => n + 1);
         }
         else {
             (0, assistantConversationHistory_1.upsertAssistantConversation)({
-                id: conversationId,
+                id: activeConversationId,
                 courseId: courseId ?? null,
                 surface,
                 title,
             });
             setHistoryRefresh(n => n + 1);
         }
-        await send(conversationId, { message: text, metadata });
+        await send(activeConversationId, { message: text, metadata });
     }, [
         allowed,
+        chatInputReady,
         apiMode,
         chapterId,
         conversationId,
+        ensureConversation,
         courseComplete,
         courseId,
         getVideoTimestamp,
@@ -623,7 +643,10 @@ const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapte
         learningPathId,
         learningPathName,
         additionalContext,
+        pinnedConversationId,
+        selectedMode,
         send,
+        singleMode,
         surface,
         fsAiUserId,
         serverUserProfile,
@@ -660,15 +683,15 @@ const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapte
                 historyError && (react_1.default.createElement(antd_1.Alert, { type: "warning", message: historyError, className: "mb-3", showIcon: true, closable: true, onClose: () => setHistoryError(null) })),
                 ensureError && (react_1.default.createElement(antd_1.Alert, { type: "error", message: ensureError, className: "mb-3", showIcon: true, closable: true, onClose: () => setEnsureError(null) })),
                 react_1.default.createElement("div", { className: `flex min-h-0 flex-1 flex-col ${inSkillpassOnboarding || inProfileChat ? 'overflow-hidden' : 'overflow-y-auto'}` }, inSkillpassOnboarding && fsAiUserId ? (react_1.default.createElement(OnboardingWizard_1.OnboardingWizard, { fsAiUserId: fsAiUserId, restart: profileEditOpen && (onboardingComplete || hasSavedProfile), onComplete: handleOnboardingComplete })) : inProfileChat ? (react_1.default.createElement("div", { className: "flex min-h-0 flex-1 flex-col overflow-hidden" },
-                    react_1.default.createElement(MessageList_1.MessageList, { messages: profileChatMessages }))) : showPicker ? (react_1.default.createElement(ModePicker_1.ModePicker, { disabled: !conversationId || convQuery.isLoading, modes: allowedModes, onSelect: mode => setSelectedMode(mode) })) : (react_1.default.createElement(react_1.default.Fragment, null,
+                    react_1.default.createElement(MessageList_1.MessageList, { messages: profileChatMessages }))) : showPicker ? (react_1.default.createElement(ModePicker_1.ModePicker, { disabled: !chatInputReady, modes: allowedModes, onSelect: mode => setSelectedMode(mode) })) : (react_1.default.createElement(react_1.default.Fragment, null,
                     messages.length === 0 ? (react_1.default.createElement(WelcomeMessage_1.WelcomeMessage, { mode: apiMode })) : (react_1.default.createElement(MessageList_1.MessageList, { messages: messages })),
-                    react_1.default.createElement(SuggestedActions_1.SuggestedActions, { mode: apiMode, actions: suggestedActions, disabled: streaming || !conversationId, onSelect: (message, actionIntent) => {
+                    react_1.default.createElement(SuggestedActions_1.SuggestedActions, { mode: apiMode, actions: suggestedActions, disabled: streaming || !chatInputReady || isCreatingConversation, onSelect: (message, actionIntent) => {
                             void handleSend(message, actionIntent);
                         } })))),
                 !inSkillpassOnboarding && (react_1.default.createElement("div", { className: "shrink-0 border-t border-blackFS-600 pt-3" },
                     react_1.default.createElement(Composer_1.Composer, { disabled: inProfileChat
                             ? !currentProfileStep
-                            : !conversationId || convQuery.isLoading, loading: inProfileChat ? false : streaming, onSend: text => {
+                            : !chatInputReady, loading: inProfileChat ? false : streaming || isCreatingConversation, onSend: text => {
                             if (inProfileChat) {
                                 handleProfileAnswer(text);
                             }

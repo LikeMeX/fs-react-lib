@@ -1,114 +1,16 @@
 import { LearningModeApi } from '../types/learningAssistant';
 export interface UseAssistantConversationOptions {
-    /** When set, skips creating a conversation and uses this id (e.g. picked from local history). */
-    pinnedConversationId: string | null;
-    /** Increment to force a new server conversation (new chat). */
-    sessionKey: number;
+    /** When set, skips creating a conversation and uses this id (e.g. picked from history). */
+    pinnedConversationId?: string | null;
+    /** Increment to discard the in-memory draft conversation (new chat). */
+    sessionKey?: number;
     /** fs-ai user id from POST /users/ensure — attached to new conversations when set. */
     fsAiUserId?: string | null;
 }
-export declare function useAssistantConversation(courseId: number | null, initialMode: LearningModeApi, enabled: boolean, options?: UseAssistantConversationOptions): {
+export declare function useAssistantConversation(_courseId: number | null, learningMode: LearningModeApi, _enabled: boolean, options?: UseAssistantConversationOptions): {
     data: string;
+    ensureConversation: () => Promise<string>;
     isLoading: boolean;
     isError: boolean;
-    error: unknown;
-    isLoadingError: false;
-    isRefetchError: true;
-    isSuccess: false;
-    status: "error";
-    dataUpdatedAt: number;
-    errorUpdatedAt: number;
-    failureCount: number;
-    failureReason: unknown;
-    errorUpdateCount: number;
-    isFetched: boolean;
-    isFetchedAfterMount: boolean;
-    isFetching: boolean;
-    isInitialLoading: boolean;
-    isPaused: boolean;
-    isPlaceholderData: boolean;
-    isPreviousData: boolean;
-    isRefetching: boolean;
-    isStale: boolean;
-    refetch: <TPageData>(options?: import("@tanstack/react-query").RefetchOptions & import("@tanstack/react-query").RefetchQueryFilters<TPageData>) => Promise<import("@tanstack/react-query").QueryObserverResult<string, unknown>>;
-    remove: () => void;
-    fetchStatus: import("@tanstack/react-query").FetchStatus;
-} | {
-    data: string;
-    isLoading: boolean;
-    isError: boolean;
-    error: null;
-    isLoadingError: false;
-    isRefetchError: false;
-    isSuccess: true;
-    status: "success";
-    dataUpdatedAt: number;
-    errorUpdatedAt: number;
-    failureCount: number;
-    failureReason: unknown;
-    errorUpdateCount: number;
-    isFetched: boolean;
-    isFetchedAfterMount: boolean;
-    isFetching: boolean;
-    isInitialLoading: boolean;
-    isPaused: boolean;
-    isPlaceholderData: boolean;
-    isPreviousData: boolean;
-    isRefetching: boolean;
-    isStale: boolean;
-    refetch: <TPageData>(options?: import("@tanstack/react-query").RefetchOptions & import("@tanstack/react-query").RefetchQueryFilters<TPageData>) => Promise<import("@tanstack/react-query").QueryObserverResult<string, unknown>>;
-    remove: () => void;
-    fetchStatus: import("@tanstack/react-query").FetchStatus;
-} | {
-    data: string;
-    isLoading: boolean;
-    isError: boolean;
-    error: unknown;
-    isLoadingError: true;
-    isRefetchError: false;
-    isSuccess: false;
-    status: "error";
-    dataUpdatedAt: number;
-    errorUpdatedAt: number;
-    failureCount: number;
-    failureReason: unknown;
-    errorUpdateCount: number;
-    isFetched: boolean;
-    isFetchedAfterMount: boolean;
-    isFetching: boolean;
-    isInitialLoading: boolean;
-    isPaused: boolean;
-    isPlaceholderData: boolean;
-    isPreviousData: boolean;
-    isRefetching: boolean;
-    isStale: boolean;
-    refetch: <TPageData>(options?: import("@tanstack/react-query").RefetchOptions & import("@tanstack/react-query").RefetchQueryFilters<TPageData>) => Promise<import("@tanstack/react-query").QueryObserverResult<string, unknown>>;
-    remove: () => void;
-    fetchStatus: import("@tanstack/react-query").FetchStatus;
-} | {
-    data: string;
-    isLoading: boolean;
-    isError: boolean;
-    error: null;
-    isLoadingError: false;
-    isRefetchError: false;
-    isSuccess: false;
-    status: "loading";
-    dataUpdatedAt: number;
-    errorUpdatedAt: number;
-    failureCount: number;
-    failureReason: unknown;
-    errorUpdateCount: number;
-    isFetched: boolean;
-    isFetchedAfterMount: boolean;
-    isFetching: boolean;
-    isInitialLoading: boolean;
-    isPaused: boolean;
-    isPlaceholderData: boolean;
-    isPreviousData: boolean;
-    isRefetching: boolean;
-    isStale: boolean;
-    refetch: <TPageData>(options?: import("@tanstack/react-query").RefetchOptions & import("@tanstack/react-query").RefetchQueryFilters<TPageData>) => Promise<import("@tanstack/react-query").QueryObserverResult<string, unknown>>;
-    remove: () => void;
-    fetchStatus: import("@tanstack/react-query").FetchStatus;
+    error: Error;
 };
