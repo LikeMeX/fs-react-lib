@@ -198,6 +198,7 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
     const [userProfile, setUserProfile] = useState<AssistantUserProfile | null>(null);
     const [profileLoaded, setProfileLoaded] = useState(false);
     const [profileEditOpen, setProfileEditOpen] = useState(false);
+    const [profileMenuOpen, setProfileMenuOpen] = useState(false);
     const [profileDraft, setProfileDraft] = useState<Partial<AssistantUserProfile>>({});
     const [profileStepIdx, setProfileStepIdx] = useState(0);
     const skillpassOn = isSkillpassOnboardingEnabled();
@@ -330,14 +331,11 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
         !skillpassOn && profileLoaded && (!profileComplete || profileEditOpen);
     const inProfileChat = inLegacyProfileChat;
 
-    const showSkillpassProfileCard =
-        skillpassOn &&
-        ensureReady &&
-        !!fsAiUserId &&
-        !inSkillpassOnboarding &&
-        !inProfileChat &&
-        hasSavedProfile &&
-        effectiveProfile != null;
+    const canOpenProfileMenu =
+        profileLoaded &&
+        (skillpassOn
+            ? ensureReady && !!fsAiUserId && (hasSavedProfile || onboardingComplete)
+            : profileComplete);
     const currentProfileStep: ProfileStep | null =
         inProfileChat && profileStepIdx < PROFILE_STEPS.length ? PROFILE_STEPS[profileStepIdx] : null;
 
@@ -471,6 +469,15 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
         setProfileStepIdx(idx);
         setProfileEditOpen(true);
     }, [skillpassOn, userProfile]);
+
+    const openProfileMenu = useCallback(() => {
+        setProfileMenuOpen(true);
+    }, []);
+
+    const handleProfileEditFromMenu = useCallback(() => {
+        setProfileMenuOpen(false);
+        startProfileEdit();
+    }, [startProfileEdit]);
 
     const cancelProfileEdit = useCallback(() => {
         setProfileEditOpen(false);
@@ -760,8 +767,8 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
                             <button
                                 type="button"
                                 aria-label={profileEditOpen ? 'กลับไปสนทนา' : 'แก้ไขโปรไฟล์ผู้เรียน'}
-                                onClick={profileEditOpen ? cancelProfileEdit : startProfileEdit}
-                                disabled={!profileLoaded || !profileComplete}
+                                onClick={profileEditOpen ? cancelProfileEdit : openProfileMenu}
+                                disabled={profileEditOpen ? false : !canOpenProfileMenu}
                                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-white/90 transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaryFS-400 disabled:opacity-40">
                                 <LuUserCog size={20} aria-hidden />
                             </button>
@@ -836,13 +843,6 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
                             />
                         ) : (
                             <>
-                                {showSkillpassProfileCard && effectiveProfile ? (
-                                    <AssistantProfileCard
-                                        profile={effectiveProfile}
-                                        summary={profileSummaryTh}
-                                        onEdit={startProfileEdit}
-                                    />
-                                ) : null}
                                 {messages.length === 0 ? (
                                     <WelcomeMessage mode={apiMode} />
                                 ) : (
@@ -1022,6 +1022,50 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
                         </div>
                     )}
                 </div>
+            </Drawer>
+
+            <Drawer
+                title="แก้ไขโปรไฟล์ผู้เรียน"
+                placement="right"
+                width={360}
+                onClose={() => setProfileMenuOpen(false)}
+                open={profileMenuOpen}
+                destroyOnClose={false}
+                styles={{
+                    body: { paddingTop: 12, paddingBottom: 16 },
+                }}
+                classNames={{
+                    body: 'bg-zinc-50 dark:bg-zinc-950',
+                }}>
+                {effectiveProfile && hasSavedProfile ? (
+                    <AssistantProfileCard
+                        profile={effectiveProfile}
+                        summary={profileSummaryTh}
+                        onEdit={handleProfileEditFromMenu}
+                        className="mb-0"
+                    />
+                ) : skillpassOn ? (
+                    <div className="rounded-xl border border-dashed border-black/15 bg-white px-4 py-8 text-center dark:border-white/15 dark:bg-zinc-900/80">
+                        <p className="text-sm font-medium text-black/75 dark:text-white/75">
+                            ยังไม่มีโปรไฟล์ผู้เรียน
+                        </p>
+                        <p className="mt-2 text-xs text-black/55 dark:text-white/55">
+                            กรอกแบบสอบถาม SkillPass เพื่อให้ผู้ช่วยปรับคำตอบให้เหมาะกับคุณ
+                        </p>
+                    </div>
+                ) : (
+                    <div className="flex flex-col gap-3">
+                        <p className="m-0 text-sm text-black/70 dark:text-white/70">
+                            ตั้งค่าโปรไฟล์ผู้เรียนเพื่อให้ผู้ช่วยแนะนำเนื้อหาได้ตรงกับเป้าหมายของคุณ
+                        </p>
+                        <button
+                            type="button"
+                            onClick={handleProfileEditFromMenu}
+                            className="inline-flex min-h-10 items-center justify-center rounded-lg bg-primaryFS-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-primaryFS-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaryFS-400">
+                            เริ่มตั้งค่าโปรไฟล์
+                        </button>
+                    </div>
+                )}
             </Drawer>
         </>
     );

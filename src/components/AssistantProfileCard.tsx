@@ -10,19 +10,21 @@ export interface AssistantProfileCardProps {
     profile: AssistantUserProfile;
     summary?: string | null;
     onEdit: () => void;
+    className?: string;
 }
 
 export const AssistantProfileCard: React.FC<AssistantProfileCardProps> = ({
     profile,
     summary,
     onEdit,
+    className,
 }) => {
     const rows = assistantProfileDisplayRows(profile);
 
     return (
         <section
             aria-labelledby="assistant-profile-heading"
-            className="mb-3 shrink-0 rounded-xl border border-blackFS-500 bg-blackFS-700/90 px-3.5 py-3">
+            className={`shrink-0 rounded-xl border border-blackFS-500 bg-blackFS-700/90 px-3.5 py-3 ${className ?? 'mb-3'}`}>
             <div className="mb-2 flex items-start justify-between gap-2">
                 <div className="min-w-0">
                     <h3

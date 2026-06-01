@@ -141,6 +141,7 @@ const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapte
     const [userProfile, setUserProfile] = (0, react_1.useState)(null);
     const [profileLoaded, setProfileLoaded] = (0, react_1.useState)(false);
     const [profileEditOpen, setProfileEditOpen] = (0, react_1.useState)(false);
+    const [profileMenuOpen, setProfileMenuOpen] = (0, react_1.useState)(false);
     const [profileDraft, setProfileDraft] = (0, react_1.useState)({});
     const [profileStepIdx, setProfileStepIdx] = (0, react_1.useState)(0);
     const skillpassOn = (0, oauthUserEnsure_1.isSkillpassOnboardingEnabled)();
@@ -252,13 +253,10 @@ const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapte
         : (0, assistantUserProfile_1.isAssistantUserProfileComplete)(userProfile);
     const inLegacyProfileChat = !skillpassOn && profileLoaded && (!profileComplete || profileEditOpen);
     const inProfileChat = inLegacyProfileChat;
-    const showSkillpassProfileCard = skillpassOn &&
-        ensureReady &&
-        !!fsAiUserId &&
-        !inSkillpassOnboarding &&
-        !inProfileChat &&
-        hasSavedProfile &&
-        effectiveProfile != null;
+    const canOpenProfileMenu = profileLoaded &&
+        (skillpassOn
+            ? ensureReady && !!fsAiUserId && (hasSavedProfile || onboardingComplete)
+            : profileComplete);
     const currentProfileStep = inProfileChat && profileStepIdx < PROFILE_STEPS.length ? PROFILE_STEPS[profileStepIdx] : null;
     const profileChatMessages = (0, react_1.useMemo)(() => {
         if (!inProfileChat)
@@ -387,6 +385,13 @@ const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapte
         setProfileStepIdx(idx);
         setProfileEditOpen(true);
     }, [skillpassOn, userProfile]);
+    const openProfileMenu = (0, react_1.useCallback)(() => {
+        setProfileMenuOpen(true);
+    }, []);
+    const handleProfileEditFromMenu = (0, react_1.useCallback)(() => {
+        setProfileMenuOpen(false);
+        startProfileEdit();
+    }, [startProfileEdit]);
     const cancelProfileEdit = (0, react_1.useCallback)(() => {
         setProfileEditOpen(false);
         setProfileDraft({});
@@ -642,7 +647,7 @@ const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapte
                         react_1.default.createElement("button", { type: "button", "aria-label": "\u0E40\u0E23\u0E34\u0E48\u0E21\u0E1A\u0E17\u0E2A\u0E19\u0E17\u0E19\u0E32\u0E43\u0E2B\u0E21\u0E48", onClick: handleNewConversation, className: "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-white/90 transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaryFS-400" },
                             react_1.default.createElement(LuMessageSquarePlus, { size: 20, "aria-hidden": true }))),
                     react_1.default.createElement(antd_1.Tooltip, { title: profileEditOpen ? 'กลับไปสนทนา' : 'แก้ไขโปรไฟล์ผู้เรียน' },
-                        react_1.default.createElement("button", { type: "button", "aria-label": profileEditOpen ? 'กลับไปสนทนา' : 'แก้ไขโปรไฟล์ผู้เรียน', onClick: profileEditOpen ? cancelProfileEdit : startProfileEdit, disabled: !profileLoaded || !profileComplete, className: "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-white/90 transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaryFS-400 disabled:opacity-40" },
+                        react_1.default.createElement("button", { type: "button", "aria-label": profileEditOpen ? 'กลับไปสนทนา' : 'แก้ไขโปรไฟล์ผู้เรียน', onClick: profileEditOpen ? cancelProfileEdit : openProfileMenu, disabled: profileEditOpen ? false : !canOpenProfileMenu, className: "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-white/90 transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaryFS-400 disabled:opacity-40" },
                             react_1.default.createElement(LuUserCog, { size: 20, "aria-hidden": true }))),
                     react_1.default.createElement(antd_1.Tooltip, { title: fullPage ? 'โหมดแผงข้าง' : 'โหมดเต็มหน้าจอ' },
                         react_1.default.createElement("button", { type: "button", "aria-label": fullPage ? 'ย่อแผงผู้ช่วย' : 'ขยายแผงผู้ช่วยเต็มหน้าจอ', onClick: toggleFullPage, className: "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-white/90 transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaryFS-400" }, fullPage ? react_1.default.createElement(LuMinimize2, { size: 20, "aria-hidden": true }) : react_1.default.createElement(LuMaximize2, { size: 20, "aria-hidden": true }))),
@@ -656,7 +661,6 @@ const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapte
                 ensureError && (react_1.default.createElement(antd_1.Alert, { type: "error", message: ensureError, className: "mb-3", showIcon: true, closable: true, onClose: () => setEnsureError(null) })),
                 react_1.default.createElement("div", { className: `flex min-h-0 flex-1 flex-col ${inSkillpassOnboarding || inProfileChat ? 'overflow-hidden' : 'overflow-y-auto'}` }, inSkillpassOnboarding && fsAiUserId ? (react_1.default.createElement(OnboardingWizard_1.OnboardingWizard, { fsAiUserId: fsAiUserId, restart: profileEditOpen && (onboardingComplete || hasSavedProfile), onComplete: handleOnboardingComplete })) : inProfileChat ? (react_1.default.createElement("div", { className: "flex min-h-0 flex-1 flex-col overflow-hidden" },
                     react_1.default.createElement(MessageList_1.MessageList, { messages: profileChatMessages }))) : showPicker ? (react_1.default.createElement(ModePicker_1.ModePicker, { disabled: !conversationId || convQuery.isLoading, modes: allowedModes, onSelect: mode => setSelectedMode(mode) })) : (react_1.default.createElement(react_1.default.Fragment, null,
-                    showSkillpassProfileCard && effectiveProfile ? (react_1.default.createElement(AssistantProfileCard_1.AssistantProfileCard, { profile: effectiveProfile, summary: profileSummaryTh, onEdit: startProfileEdit })) : null,
                     messages.length === 0 ? (react_1.default.createElement(WelcomeMessage_1.WelcomeMessage, { mode: apiMode })) : (react_1.default.createElement(MessageList_1.MessageList, { messages: messages })),
                     react_1.default.createElement(SuggestedActions_1.SuggestedActions, { mode: apiMode, actions: suggestedActions, disabled: streaming || !conversationId, onSelect: (message, actionIntent) => {
                             void handleSend(message, actionIntent);
@@ -726,6 +730,15 @@ const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapte
                                         react_1.default.createElement("button", { type: "button", "aria-label": `ตัวเลือกสำหรับ ${entry.title}`, onClick: e => e.stopPropagation(), className: "flex h-[52px] w-11 shrink-0 items-center justify-center border-l border-black/8 text-black/45 transition hover:bg-black/[0.04] hover:text-black/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primaryFS-500 dark:border-white/10 dark:text-white/50 dark:hover:bg-white/5 dark:hover:text-white/80" },
                                             react_1.default.createElement(LuMoreVertical, { size: 18, "aria-hidden": true }))))));
                         }))));
-                })))))));
+                }))))),
+        react_1.default.createElement(antd_1.Drawer, { title: "\u0E41\u0E01\u0E49\u0E44\u0E02\u0E42\u0E1B\u0E23\u0E44\u0E1F\u0E25\u0E4C\u0E1C\u0E39\u0E49\u0E40\u0E23\u0E35\u0E22\u0E19", placement: "right", width: 360, onClose: () => setProfileMenuOpen(false), open: profileMenuOpen, destroyOnClose: false, styles: {
+                body: { paddingTop: 12, paddingBottom: 16 },
+            }, classNames: {
+                body: 'bg-zinc-50 dark:bg-zinc-950',
+            } }, effectiveProfile && hasSavedProfile ? (react_1.default.createElement(AssistantProfileCard_1.AssistantProfileCard, { profile: effectiveProfile, summary: profileSummaryTh, onEdit: handleProfileEditFromMenu, className: "mb-0" })) : skillpassOn ? (react_1.default.createElement("div", { className: "rounded-xl border border-dashed border-black/15 bg-white px-4 py-8 text-center dark:border-white/15 dark:bg-zinc-900/80" },
+            react_1.default.createElement("p", { className: "text-sm font-medium text-black/75 dark:text-white/75" }, "\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E21\u0E35\u0E42\u0E1B\u0E23\u0E44\u0E1F\u0E25\u0E4C\u0E1C\u0E39\u0E49\u0E40\u0E23\u0E35\u0E22\u0E19"),
+            react_1.default.createElement("p", { className: "mt-2 text-xs text-black/55 dark:text-white/55" }, "\u0E01\u0E23\u0E2D\u0E01\u0E41\u0E1A\u0E1A\u0E2A\u0E2D\u0E1A\u0E16\u0E32\u0E21 SkillPass \u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E43\u0E2B\u0E49\u0E1C\u0E39\u0E49\u0E0A\u0E48\u0E27\u0E22\u0E1B\u0E23\u0E31\u0E1A\u0E04\u0E33\u0E15\u0E2D\u0E1A\u0E43\u0E2B\u0E49\u0E40\u0E2B\u0E21\u0E32\u0E30\u0E01\u0E31\u0E1A\u0E04\u0E38\u0E13"))) : (react_1.default.createElement("div", { className: "flex flex-col gap-3" },
+            react_1.default.createElement("p", { className: "m-0 text-sm text-black/70 dark:text-white/70" }, "\u0E15\u0E31\u0E49\u0E07\u0E04\u0E48\u0E32\u0E42\u0E1B\u0E23\u0E44\u0E1F\u0E25\u0E4C\u0E1C\u0E39\u0E49\u0E40\u0E23\u0E35\u0E22\u0E19\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E43\u0E2B\u0E49\u0E1C\u0E39\u0E49\u0E0A\u0E48\u0E27\u0E22\u0E41\u0E19\u0E30\u0E19\u0E33\u0E40\u0E19\u0E37\u0E49\u0E2D\u0E2B\u0E32\u0E44\u0E14\u0E49\u0E15\u0E23\u0E07\u0E01\u0E31\u0E1A\u0E40\u0E1B\u0E49\u0E32\u0E2B\u0E21\u0E32\u0E22\u0E02\u0E2D\u0E07\u0E04\u0E38\u0E13"),
+            react_1.default.createElement("button", { type: "button", onClick: handleProfileEditFromMenu, className: "inline-flex min-h-10 items-center justify-center rounded-lg bg-primaryFS-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-primaryFS-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaryFS-400" }, "\u0E40\u0E23\u0E34\u0E48\u0E21\u0E15\u0E31\u0E49\u0E07\u0E04\u0E48\u0E32\u0E42\u0E1B\u0E23\u0E44\u0E1F\u0E25\u0E4C"))))));
 };
 exports.AssistantPanel = AssistantPanel;

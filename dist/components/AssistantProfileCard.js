@@ -8,9 +8,9 @@ const react_1 = __importDefault(require("react"));
 const lu_1 = require("react-icons/lu");
 const assistantProfileDisplay_1 = require("../helpers/assistantProfileDisplay");
 const LuPencil = lu_1.LuPencil;
-const AssistantProfileCard = ({ profile, summary, onEdit, }) => {
+const AssistantProfileCard = ({ profile, summary, onEdit, className, }) => {
     const rows = (0, assistantProfileDisplay_1.assistantProfileDisplayRows)(profile);
-    return (react_1.default.createElement("section", { "aria-labelledby": "assistant-profile-heading", className: "mb-3 shrink-0 rounded-xl border border-blackFS-500 bg-blackFS-700/90 px-3.5 py-3" },
+    return (react_1.default.createElement("section", { "aria-labelledby": "assistant-profile-heading", className: `shrink-0 rounded-xl border border-blackFS-500 bg-blackFS-700/90 px-3.5 py-3 ${className ?? 'mb-3'}` },
         react_1.default.createElement("div", { className: "mb-2 flex items-start justify-between gap-2" },
             react_1.default.createElement("div", { className: "min-w-0" },
                 react_1.default.createElement("h3", { id: "assistant-profile-heading", className: "m-0 text-sm font-semibold text-blackFS-100" }, "\u0E42\u0E1B\u0E23\u0E44\u0E1F\u0E25\u0E4C SkillPass"),

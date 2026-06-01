@@ -4,5 +4,6 @@ export interface AssistantProfileCardProps {
     profile: AssistantUserProfile;
     summary?: string | null;
     onEdit: () => void;
+    className?: string;
 }
 export declare const AssistantProfileCard: React.FC<AssistantProfileCardProps>;
