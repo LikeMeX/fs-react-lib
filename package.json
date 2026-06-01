@@ -1,6 +1,6 @@
 {
     "name": "@likemex/fs-react-lib",
-    "version": "0.1.6",
+    "version": "0.1.4",
     "description": "Shared FS AI assistant chat widget (REST + SSE) for FutureSkill Next.js apps",
     "license": "MIT",
     "author": "LikeMeX",
