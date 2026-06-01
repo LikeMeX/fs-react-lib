@@ -85,8 +85,17 @@ export interface MessageOut {
 }
 export interface ConversationOut {
     id: string;
+    title?: string;
     mode?: LearningModeApi;
-    messages: MessageOut[];
+    learning_mode?: LearningModeApi;
+    messages?: MessageOut[];
+    created_at?: string;
+    updated_at?: string;
+}
+export interface ConversationListOut {
+    items: ConversationOut[];
+    count: number;
+    total: number;
 }
 /** Opaque user-token type. Apps may pass their own decoded JWT object. */
 export type AssistantUserMember = Record<string, unknown> | null | undefined;

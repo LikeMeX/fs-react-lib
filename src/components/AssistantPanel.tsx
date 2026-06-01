@@ -43,6 +43,7 @@ const LuMoreVertical: IconFC = props => (
 import axios from 'axios';
 import { useAssistant } from '../contexts/assistantContext';
 import {
+    AssistantHistoryEntry,
     AssistantSurface,
     listAssistantConversations,
     readAssistantFullPagePreference,
@@ -66,6 +67,7 @@ import {
     isSkillpassOnboardingEnabled,
     oauthClaimsFromUserMember,
 } from '../helpers/oauthUserEnsure';
+import { mapApiConversationToHistoryEntry } from '../helpers/mapApiConversationHistory';
 import { useAssistantConversation } from '../hooks/useAssistantConversation';
 import { useAssistantPhase } from '../hooks/useAssistantPhase';
 import { useAssistantStream } from '../hooks/useAssistantStream';
@@ -186,7 +188,9 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
     const [sessionKey, setSessionKey] = useState(0);
     const [historyOpen, setHistoryOpen] = useState(false);
     const [historySearch, setHistorySearch] = useState('');
-    const [, setHistoryRefresh] = useState(0);
+    const [historyRefresh, setHistoryRefresh] = useState(0);
+    const [serverHistory, setServerHistory] = useState<AssistantHistoryEntry[]>([]);
+    const [historyLoading, setHistoryLoading] = useState(false);
     const [fullPage, setFullPage] = useState(false);
     const [historyError, setHistoryError] = useState<string | null>(null);
     const [userProfile, setUserProfile] = useState<AssistantUserProfile | null>(null);
@@ -341,6 +345,22 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
         return out;
     }, [inProfileChat, profileStepIdx, profileDraft]);
 
+    const persistLegacyUserProfile = useCallback(
+        async (finalProfile: AssistantUserProfile) => {
+            writeAssistantUserProfile(finalProfile);
+            setUserProfile(finalProfile);
+            if (!fsAiUserId) return;
+            try {
+                const res = await onboardingApi.updateUserProfile(fsAiUserId, finalProfile);
+                setOnboardingComplete(res.onboarding_complete);
+                setServerUserProfile(res.user_profile ?? null);
+            } catch {
+                /* local profile still saved */
+            }
+        },
+        [fsAiUserId]
+    );
+
     const handleProfileAnswer = useCallback(
         (text: string) => {
             const trimmed = text.trim();
@@ -359,14 +379,13 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
                     industry: nextDraft.industry ?? '',
                     timeframe: nextDraft.timeframe ?? '',
                 };
-                writeAssistantUserProfile(finalProfile);
-                setUserProfile(finalProfile);
+                void persistLegacyUserProfile(finalProfile);
                 setProfileEditOpen(false);
                 setProfileDraft({});
                 setProfileStepIdx(0);
             }
         },
-        [currentProfileStep, profileDraft, profileStepIdx]
+        [currentProfileStep, profileDraft, profileStepIdx, persistLegacyUserProfile]
     );
 
     const refreshEnsureUser = useCallback(async () => {
@@ -410,27 +429,61 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
         setProfileStepIdx(0);
     }, []);
 
-    // Watch surface: hand off most-recent enroll conversation into this surface
+    const loadServerHistory = useCallback(async () => {
+        if (!fsAiUserId) return;
+        setHistoryLoading(true);
+        setHistoryError(null);
+        try {
+            const res = await fsAiApi.listConversations(fsAiUserId, { limit: 100 });
+            setServerHistory(res.items.map(mapApiConversationToHistoryEntry));
+        } catch (err) {
+            const status = axios.isAxiosError(err) ? err.response?.status : undefined;
+            const detail = axios.isAxiosError(err)
+                ? typeof err.response?.data === 'string'
+                    ? err.response.data
+                    : JSON.stringify(err.response?.data)
+                : (err as Error)?.message;
+            setHistoryError(`โหลดประวัติไม่สำเร็จ (${status ?? 'network'}): ${detail || ''}`);
+        } finally {
+            setHistoryLoading(false);
+        }
+    }, [fsAiUserId]);
+
+    useEffect(() => {
+        if (!historyOpen || !fsAiUserId) return;
+        void loadServerHistory();
+    }, [historyOpen, fsAiUserId, historyRefresh, loadServerHistory]);
+
+    // Watch surface: continue the user's most recent conversation (server-backed when logged in)
     useEffect(() => {
         if (surface !== 'watch' || enrollHandoffChecked) return;
         if (pinnedConversationId) {
             setEnrollHandoffChecked(true);
             return;
         }
+        if (fsAiUserId) {
+            let cancelled = false;
+            void fsAiApi
+                .listConversations(fsAiUserId, { limit: 1 })
+                .then(res => {
+                    if (cancelled) return;
+                    const latest = res.items[0];
+                    if (latest?.id) setPinnedConversationId(String(latest.id));
+                    setEnrollHandoffChecked(true);
+                })
+                .catch(() => {
+                    if (!cancelled) setEnrollHandoffChecked(true);
+                });
+            return () => {
+                cancelled = true;
+            };
+        }
         const enrollItems = listAssistantConversations(courseId ?? null, 'enroll');
         if (enrollItems.length > 0) {
-            const latest = enrollItems[0];
-            upsertAssistantConversation({
-                id: latest.id,
-                courseId: courseId ?? null,
-                surface: 'watch',
-                title: latest.title,
-                updatedAt: latest.updatedAt,
-            });
-            setPinnedConversationId(latest.id);
+            setPinnedConversationId(enrollItems[0].id);
         }
         setEnrollHandoffChecked(true);
-    }, [surface, courseId, pinnedConversationId, enrollHandoffChecked]);
+    }, [surface, courseId, pinnedConversationId, enrollHandoffChecked, fsAiUserId]);
 
     useEffect(() => {
         if (!historyOpen) setHistorySearch('');
@@ -480,7 +533,10 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
         };
     }, [pinnedConversationId, conversationId, setMessages]);
 
-    const historyItems = listAssistantConversations(courseId ?? null, surface);
+    const historyItems = useMemo(() => {
+        if (fsAiUserId) return serverHistory;
+        return listAssistantConversations(courseId ?? null, surface);
+    }, [fsAiUserId, serverHistory, courseId, surface]);
 
     const filteredHistoryItems = useMemo(() => {
         const q = historySearch.trim().toLowerCase();
@@ -523,19 +579,25 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
     const handleRemoveHistoryEntry = useCallback(
         (id: string) => {
             Modal.confirm({
-                title: 'ลบออกจากรายการ?',
-                content: 'ลบเฉพาะรายการในประวัตินี้ การสนทนาบนเซิร์ฟเวอร์ยังอยู่',
+                title: 'ลบบทสนทนานี้?',
+                content: fsAiUserId
+                    ? 'การสนทนาจะถูกลบจากบัญชีของคุณและจะหายจากทุกหน้า'
+                    : 'ลบเฉพาะรายการในประวัติบนเครื่องนี้',
                 okText: 'ลบ',
                 cancelText: 'ยกเลิก',
                 okButtonProps: { danger: true },
-                onOk: () => {
-                    removeAssistantConversation(id);
+                onOk: async () => {
+                    if (fsAiUserId) {
+                        await fsAiApi.deleteConversation(id);
+                    } else {
+                        removeAssistantConversation(id);
+                    }
                     setHistoryRefresh(n => n + 1);
                     if (pinnedConversationId === id) setPinnedConversationId(null);
                 },
             });
         },
-        [pinnedConversationId]
+        [pinnedConversationId, fsAiUserId]
     );
 
     const toggleFullPage = useCallback(() => {
@@ -568,13 +630,21 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
                     userProfileOutToAssistant(serverUserProfile) ??
                     undefined,
             });
-            upsertAssistantConversation({
-                id: conversationId,
-                courseId: courseId ?? null,
-                surface,
-                title: previewTitle(text),
-            });
-            setHistoryRefresh(n => n + 1);
+            const title = previewTitle(text);
+            if (fsAiUserId) {
+                void fsAiApi.updateConversationTitle(conversationId, title).catch(() => {
+                    /* title sync is best-effort */
+                });
+                setHistoryRefresh(n => n + 1);
+            } else {
+                upsertAssistantConversation({
+                    id: conversationId,
+                    courseId: courseId ?? null,
+                    surface,
+                    title,
+                });
+                setHistoryRefresh(n => n + 1);
+            }
             await send(conversationId, { message: text, metadata });
         },
         [
@@ -592,6 +662,7 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
             additionalContext,
             send,
             surface,
+            fsAiUserId,
             serverUserProfile,
             userMember,
             userProfile,
@@ -694,7 +765,10 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
                             onClose={() => setEnsureError(null)}
                         />
                     )}
-                    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+                    <div
+                        className={`flex min-h-0 flex-1 flex-col ${
+                            inSkillpassOnboarding || inProfileChat ? 'overflow-hidden' : 'overflow-y-auto'
+                        }`}>
                         {inSkillpassOnboarding && fsAiUserId ? (
                             <OnboardingWizard
                                 fsAiUserId={fsAiUserId}
@@ -702,7 +776,9 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
                                 onComplete={handleOnboardingComplete}
                             />
                         ) : inProfileChat ? (
-                            <MessageList messages={profileChatMessages} />
+                            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+                                <MessageList messages={profileChatMessages} />
+                            </div>
                         ) : showPicker ? (
                             <ModePicker
                                 disabled={!conversationId || convQuery.isLoading}
@@ -728,21 +804,23 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
                         )}
                     </div>
                     {!inSkillpassOnboarding && (
-                        <Composer
-                            disabled={
-                                inProfileChat
-                                    ? !currentProfileStep
-                                    : !conversationId || convQuery.isLoading
-                            }
-                            loading={inProfileChat ? false : streaming}
-                            onSend={text => {
-                                if (inProfileChat) {
-                                    handleProfileAnswer(text);
-                                } else {
-                                    void handleSend(text);
+                        <div className="shrink-0 border-t border-blackFS-600 pt-3">
+                            <Composer
+                                disabled={
+                                    inProfileChat
+                                        ? !currentProfileStep
+                                        : !conversationId || convQuery.isLoading
                                 }
-                            }}
-                        />
+                                loading={inProfileChat ? false : streaming}
+                                onSend={text => {
+                                    if (inProfileChat) {
+                                        handleProfileAnswer(text);
+                                    } else {
+                                        void handleSend(text);
+                                    }
+                                }}
+                            />
+                        </div>
                     )}
                 </div>
             </aside>
@@ -781,7 +859,9 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
                         prefix={<LuSearch className="text-black/40 dark:text-white/45" size={16} aria-hidden />}
                         className="rounded-xl border-black/10 bg-white dark:border-white/10 dark:bg-zinc-900"
                     />
-                    {historyItems.length === 0 ? (
+                    {historyLoading ? (
+                        <p className="text-center text-sm text-black/60 dark:text-white/55">กำลังโหลดประวัติ…</p>
+                    ) : historyItems.length === 0 ? (
                         <div className="rounded-xl border border-dashed border-black/15 bg-white px-4 py-8 text-center dark:border-white/15 dark:bg-zinc-900/80">
                             <LuMessageSquare
                                 className="mx-auto mb-3 text-black/25 dark:text-white/30"

@@ -1,5 +1,7 @@
 import axios, { AxiosInstance } from 'axios';
+import { configureOnboardingAuth } from './onboardingApi';
 import {
+    ConversationListOut,
     ConversationOut,
     CreateConversationBody,
     CreateConversationResponse,
@@ -11,6 +13,7 @@ let tokenProvider: () => string | null | undefined = () => null;
 
 export function configureFsAi(opts: { getToken: () => string | null | undefined }): void {
     tokenProvider = opts.getToken;
+    configureOnboardingAuth(opts);
 }
 
 function isFsAiProxyEnabled(): boolean {
@@ -70,6 +73,34 @@ export const fsAiApi = {
         if (!c) throw new Error('FS_AI_API_NOT_CONFIGURED');
         const { data } = await c.get<ConversationOut>(`/chat/conversations/${conversationId}`);
         return data;
+    },
+
+    async listConversations(
+        userId: string,
+        opts?: { offset?: number; limit?: number }
+    ): Promise<ConversationListOut> {
+        const c = client();
+        if (!c) throw new Error('FS_AI_API_NOT_CONFIGURED');
+        const { data } = await c.get<ConversationListOut>('/chat/conversations', {
+            params: {
+                user_id: userId,
+                offset: opts?.offset ?? 0,
+                limit: opts?.limit ?? 100,
+            },
+        });
+        return data;
+    },
+
+    async updateConversationTitle(conversationId: string, title: string): Promise<void> {
+        const c = client();
+        if (!c) throw new Error('FS_AI_API_NOT_CONFIGURED');
+        await c.patch(`/chat/conversations/${conversationId}`, { title });
+    },
+
+    async deleteConversation(conversationId: string): Promise<void> {
+        const c = client();
+        if (!c) throw new Error('FS_AI_API_NOT_CONFIGURED');
+        await c.delete(`/chat/conversations/${conversationId}`);
     },
 
     async patchLearningMode(conversationId: string, body: PatchLearningModeBody): Promise<void> {

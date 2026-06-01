@@ -36,6 +36,7 @@ export {
 } from './helpers/assistantUserProfile';
 export type { AssistantUserProfile } from './helpers/assistantUserProfile';
 export { userProfileOutToAssistant } from './helpers/assistantUserProfile';
+export { mapApiConversationToHistoryEntry, previewConversationTitle } from './helpers/mapApiConversationHistory';
 export { onboardingApi } from './services/onboardingApi';
 export type {
     OnboardingSession,

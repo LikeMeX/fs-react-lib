@@ -1,5 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
-import { configureFsAi } from './fsAiApi';
+
+let tokenProvider: () => string | null | undefined = () => null;
 
 export interface StepOption {
     id: string;
@@ -80,7 +81,20 @@ function apiV1Base(): string | null {
 function createClient(): AxiosInstance | null {
     const base = apiV1Base();
     if (!base) return null;
-    return axios.create({ baseURL: base, timeout: 30000 });
+    const client = axios.create({ baseURL: base, timeout: 30000 });
+    client.interceptors.request.use(config => {
+        const token = tokenProvider();
+        if (token && config.headers) {
+            (config.headers as Record<string, string>).Authorization = `Bearer ${token}`;
+        }
+        return config;
+    });
+    return client;
+}
+
+/** Reuses the same token wiring as configureFsAi for onboarding/user profile routes. */
+export function configureOnboardingAuth(opts: { getToken: () => string | null | undefined }): void {
+    tokenProvider = opts.getToken;
 }
 
 export const onboardingApi = {
@@ -88,6 +102,22 @@ export const onboardingApi = {
         const c = createClient();
         if (!c) throw new Error('FS_AI_API_NOT_CONFIGURED');
         const { data } = await c.post<UserEnsureResponse>('/users/ensure', body);
+        return data;
+    },
+
+    async updateUserProfile(
+        userId: string,
+        profile: UserProfileOut
+    ): Promise<UserEnsureResponse> {
+        const c = createClient();
+        if (!c) throw new Error('FS_AI_API_NOT_CONFIGURED');
+        const { data } = await c.patch<UserEnsureResponse>(`/users/${userId}/profile`, {
+            current_job: profile.current_job ?? '',
+            target_job: profile.target_job ?? '',
+            industry: profile.industry ?? '',
+            timeframe: profile.timeframe ?? '',
+            skill_level: profile.skill_level ?? null,
+        });
         return data;
     },
 
@@ -138,4 +168,3 @@ export const onboardingApi = {
     },
 };
 
-export { configureFsAi };

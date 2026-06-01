@@ -39,6 +39,10 @@ const fieldInputClass =
 const suggestionChipClass =
     'inline-flex min-h-9 touch-manipulation items-center rounded-full border border-blackFS-500 bg-blackFS-700/90 px-3 py-1.5 text-xs font-medium text-blackFS-200 transition duration-150 ease-out hover:border-primaryFS-400 hover:bg-blackFS-600 hover:text-blackFS-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primaryFS-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-blackFS-800 disabled:cursor-not-allowed disabled:opacity-50';
 
+/** Keeps long option lists from covering earlier onboarding questions in the panel. */
+const scrollableOptionsClass =
+    'max-h-[min(40vh,220px)] overflow-y-auto overscroll-contain pr-0.5 sm:max-h-[min(45vh,260px)]';
+
 function isTextPrimaryStep(inputType: string): boolean {
     return (
         inputType === 'text' ||
@@ -58,6 +62,37 @@ function shouldUseTextPrimary(step: OnboardingStep): boolean {
     }
     if (isTextPrimaryStep(step.input_type)) return true;
     return Boolean(step.options?.length);
+}
+
+/** Maps typed text to API answer shape (option id + optional other_text). */
+export function buildTextAnswerPayload(
+    step: OnboardingStep,
+    text: string
+): { answer: string; otherText?: string } {
+    const trimmed = text.trim();
+    const options = step.options ?? [];
+    const normalized = trimmed.toLowerCase();
+
+    const matchById = options.find(o => o.id.toLowerCase() === normalized);
+    if (matchById) return { answer: matchById.id };
+
+    const matchByLabel = options.find(o => o.label.trim().toLowerCase() === normalized);
+    if (matchByLabel) return { answer: matchByLabel.id };
+
+    if (
+        step.input_type === 'single_select' ||
+        (step.input_type === 'text_with_suggestions' && options.length > 0)
+    ) {
+        const otherOption = options.find(
+            o => o.id === 'other' || o.id.endsWith('_other')
+        );
+        if (otherOption) {
+            return { answer: otherOption.id, otherText: trimmed };
+        }
+        return { answer: 'other', otherText: trimmed };
+    }
+
+    return { answer: trimmed };
 }
 
 function textPlaceholderForStep(stepId: string): string {
@@ -150,7 +185,8 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
 
     const submit = async (
         answer: string | string[] | number | null,
-        display: string
+        display: string,
+        otherTextOverride?: string
     ) => {
         if (!step || submitting) return;
         const loadingId = `loading-${Date.now()}`;
@@ -162,11 +198,13 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
             { id: loadingId, role: 'assistant', content: '' },
         ]);
         try {
+            const resolvedOther =
+                otherTextOverride ?? (otherText.trim() || undefined);
             const next = await onboardingApi.submitAnswer(
                 fsAiUserId,
                 step.step_id,
                 answer,
-                otherText.trim() || undefined
+                resolvedOther
             );
             setSession(next);
             resetInputs();
@@ -214,8 +252,9 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
 
     const handleTextSubmit = () => {
         const t = textAnswer.trim();
-        if (!t) return;
-        void submit(t, t);
+        if (!t || !step) return;
+        const payload = buildTextAnswerPayload(step, t);
+        void submit(payload.answer, t, payload.otherText);
     };
 
     const handleNumberSubmit = () => {
@@ -260,7 +299,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                 {suggestions.length > 0 ? (
                     <div className="flex flex-col gap-2">
                         <p className="m-0 text-xs text-blackFS-300">หรือเลือกตัวอย่าง</p>
-                        <div className="flex flex-wrap gap-2">
+                        <div className={`flex flex-wrap gap-2 ${scrollableOptionsClass}`}>
                             {suggestions.map(o => (
                                 <button
                                     key={o.id}
@@ -291,7 +330,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                             เลือกได้สูงสุด {step.max_selections} ข้อ
                         </p>
                     )}
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    <div className={`grid grid-cols-1 gap-2 sm:grid-cols-2 ${scrollableOptionsClass}`}>
                         {step.options.map(o => {
                             const selected = multiSelected.includes(o.id);
                             return (
@@ -349,7 +388,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
             );
         }
         return (
-            <div className="flex flex-col gap-2">
+            <div className={`flex flex-col gap-2 ${scrollableOptionsClass}`}>
                 {step.options.map(o => (
                     <button
                         key={o.id}
@@ -412,7 +451,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
     }
 
     return (
-        <div className="assistant-onboarding-wizard flex min-h-0 flex-1 flex-col">
+        <div className="assistant-onboarding-wizard flex min-h-0 flex-1 flex-col overflow-hidden">
             {error && (
                 <Alert
                     type="error"
@@ -423,9 +462,11 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                     onClose={() => setError(null)}
                 />
             )}
-            <MessageList messages={messages} />
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+                <MessageList messages={messages} />
+            </div>
             {outcome?.recommended_courses?.length ? (
-                <div className="mb-3 rounded-xl border border-blackFS-500 bg-blackFS-700/80 px-3.5 py-3 text-sm text-blackFS-100">
+                <div className="mb-3 shrink-0 rounded-xl border border-blackFS-500 bg-blackFS-700/80 px-3.5 py-3 text-sm text-blackFS-100">
                     <p className="m-0 mb-2 font-semibold text-blackFS-100">คอร์สแนะนำ</p>
                     <ul className="m-0 list-disc space-y-1 pl-5 text-blackFS-200">
                         {outcome.recommended_courses.map(c => (
@@ -435,7 +476,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                 </div>
             ) : null}
             {showComposer && (
-                <div className="mt-auto shrink-0 border-t border-blackFS-600 pt-3">
+                <div className="max-h-[min(55vh,420px)] shrink-0 overflow-y-auto overscroll-contain border-t border-blackFS-600 pt-3">
                     {textPrimaryComposer}
                     {plainTextComposer}
                     {optionButtons}

@@ -41,7 +41,7 @@ const MessageList = ({ messages }) => {
     (0, react_1.useEffect)(() => {
         bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
-    return (react_1.default.createElement("div", { className: "flex flex-1 flex-col gap-2 overflow-y-auto px-1 py-2" },
+    return (react_1.default.createElement("div", { className: "flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto overscroll-contain px-1 py-2" },
         messages.map(m => (react_1.default.createElement(MessageBubble_1.MessageBubble, { key: m.id, message: m }))),
         react_1.default.createElement("div", { ref: bottomRef })));
 };

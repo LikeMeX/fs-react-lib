@@ -6,9 +6,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.fsAiApi = void 0;
 exports.configureFsAi = configureFsAi;
 const axios_1 = __importDefault(require("axios"));
+const onboardingApi_1 = require("./onboardingApi");
 let tokenProvider = () => null;
 function configureFsAi(opts) {
     tokenProvider = opts.getToken;
+    (0, onboardingApi_1.configureOnboardingAuth)(opts);
 }
 function isFsAiProxyEnabled() {
     return process.env.NEXT_PUBLIC_FS_AI_USE_PROXY === 'true';
@@ -64,6 +66,31 @@ exports.fsAiApi = {
             throw new Error('FS_AI_API_NOT_CONFIGURED');
         const { data } = await c.get(`/chat/conversations/${conversationId}`);
         return data;
+    },
+    async listConversations(userId, opts) {
+        const c = client();
+        if (!c)
+            throw new Error('FS_AI_API_NOT_CONFIGURED');
+        const { data } = await c.get('/chat/conversations', {
+            params: {
+                user_id: userId,
+                offset: opts?.offset ?? 0,
+                limit: opts?.limit ?? 100,
+            },
+        });
+        return data;
+    },
+    async updateConversationTitle(conversationId, title) {
+        const c = client();
+        if (!c)
+            throw new Error('FS_AI_API_NOT_CONFIGURED');
+        await c.patch(`/chat/conversations/${conversationId}`, { title });
+    },
+    async deleteConversation(conversationId) {
+        const c = client();
+        if (!c)
+            throw new Error('FS_AI_API_NOT_CONFIGURED');
+        await c.delete(`/chat/conversations/${conversationId}`);
     },
     async patchLearningMode(conversationId, body) {
         const c = client();

@@ -60,6 +60,7 @@ const canUseLearningAssistant_1 = require("../helpers/canUseLearningAssistant");
 const buildLearningMetadata_1 = require("../helpers/buildLearningMetadata");
 const assistantUserProfile_1 = require("../helpers/assistantUserProfile");
 const oauthUserEnsure_1 = require("../helpers/oauthUserEnsure");
+const mapApiConversationHistory_1 = require("../helpers/mapApiConversationHistory");
 const useAssistantConversation_1 = require("../hooks/useAssistantConversation");
 const useAssistantPhase_1 = require("../hooks/useAssistantPhase");
 const useAssistantStream_1 = require("../hooks/useAssistantStream");
@@ -130,7 +131,9 @@ const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapte
     const [sessionKey, setSessionKey] = (0, react_1.useState)(0);
     const [historyOpen, setHistoryOpen] = (0, react_1.useState)(false);
     const [historySearch, setHistorySearch] = (0, react_1.useState)('');
-    const [, setHistoryRefresh] = (0, react_1.useState)(0);
+    const [historyRefresh, setHistoryRefresh] = (0, react_1.useState)(0);
+    const [serverHistory, setServerHistory] = (0, react_1.useState)([]);
+    const [historyLoading, setHistoryLoading] = (0, react_1.useState)(false);
     const [fullPage, setFullPage] = (0, react_1.useState)(false);
     const [historyError, setHistoryError] = (0, react_1.useState)(null);
     const [userProfile, setUserProfile] = (0, react_1.useState)(null);
@@ -271,6 +274,20 @@ const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapte
         }
         return out;
     }, [inProfileChat, profileStepIdx, profileDraft]);
+    const persistLegacyUserProfile = (0, react_1.useCallback)(async (finalProfile) => {
+        (0, assistantUserProfile_1.writeAssistantUserProfile)(finalProfile);
+        setUserProfile(finalProfile);
+        if (!fsAiUserId)
+            return;
+        try {
+            const res = await onboardingApi_1.onboardingApi.updateUserProfile(fsAiUserId, finalProfile);
+            setOnboardingComplete(res.onboarding_complete);
+            setServerUserProfile(res.user_profile ?? null);
+        }
+        catch {
+            /* local profile still saved */
+        }
+    }, [fsAiUserId]);
     const handleProfileAnswer = (0, react_1.useCallback)((text) => {
         const trimmed = text.trim();
         if (!trimmed || !currentProfileStep)
@@ -289,13 +306,12 @@ const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapte
                 industry: nextDraft.industry ?? '',
                 timeframe: nextDraft.timeframe ?? '',
             };
-            (0, assistantUserProfile_1.writeAssistantUserProfile)(finalProfile);
-            setUserProfile(finalProfile);
+            void persistLegacyUserProfile(finalProfile);
             setProfileEditOpen(false);
             setProfileDraft({});
             setProfileStepIdx(0);
         }
-    }, [currentProfileStep, profileDraft, profileStepIdx]);
+    }, [currentProfileStep, profileDraft, profileStepIdx, persistLegacyUserProfile]);
     const refreshEnsureUser = (0, react_1.useCallback)(async () => {
         if (!userMember)
             return;
@@ -337,7 +353,34 @@ const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapte
         setProfileDraft({});
         setProfileStepIdx(0);
     }, []);
-    // Watch surface: hand off most-recent enroll conversation into this surface
+    const loadServerHistory = (0, react_1.useCallback)(async () => {
+        if (!fsAiUserId)
+            return;
+        setHistoryLoading(true);
+        setHistoryError(null);
+        try {
+            const res = await fsAiApi_1.fsAiApi.listConversations(fsAiUserId, { limit: 100 });
+            setServerHistory(res.items.map(mapApiConversationHistory_1.mapApiConversationToHistoryEntry));
+        }
+        catch (err) {
+            const status = axios_1.default.isAxiosError(err) ? err.response?.status : undefined;
+            const detail = axios_1.default.isAxiosError(err)
+                ? typeof err.response?.data === 'string'
+                    ? err.response.data
+                    : JSON.stringify(err.response?.data)
+                : err?.message;
+            setHistoryError(`โหลดประวัติไม่สำเร็จ (${status ?? 'network'}): ${detail || ''}`);
+        }
+        finally {
+            setHistoryLoading(false);
+        }
+    }, [fsAiUserId]);
+    (0, react_1.useEffect)(() => {
+        if (!historyOpen || !fsAiUserId)
+            return;
+        void loadServerHistory();
+    }, [historyOpen, fsAiUserId, historyRefresh, loadServerHistory]);
+    // Watch surface: continue the user's most recent conversation (server-backed when logged in)
     (0, react_1.useEffect)(() => {
         if (surface !== 'watch' || enrollHandoffChecked)
             return;
@@ -345,20 +388,32 @@ const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapte
             setEnrollHandoffChecked(true);
             return;
         }
+        if (fsAiUserId) {
+            let cancelled = false;
+            void fsAiApi_1.fsAiApi
+                .listConversations(fsAiUserId, { limit: 1 })
+                .then(res => {
+                if (cancelled)
+                    return;
+                const latest = res.items[0];
+                if (latest?.id)
+                    setPinnedConversationId(String(latest.id));
+                setEnrollHandoffChecked(true);
+            })
+                .catch(() => {
+                if (!cancelled)
+                    setEnrollHandoffChecked(true);
+            });
+            return () => {
+                cancelled = true;
+            };
+        }
         const enrollItems = (0, assistantConversationHistory_1.listAssistantConversations)(courseId ?? null, 'enroll');
         if (enrollItems.length > 0) {
-            const latest = enrollItems[0];
-            (0, assistantConversationHistory_1.upsertAssistantConversation)({
-                id: latest.id,
-                courseId: courseId ?? null,
-                surface: 'watch',
-                title: latest.title,
-                updatedAt: latest.updatedAt,
-            });
-            setPinnedConversationId(latest.id);
+            setPinnedConversationId(enrollItems[0].id);
         }
         setEnrollHandoffChecked(true);
-    }, [surface, courseId, pinnedConversationId, enrollHandoffChecked]);
+    }, [surface, courseId, pinnedConversationId, enrollHandoffChecked, fsAiUserId]);
     (0, react_1.useEffect)(() => {
         if (!historyOpen)
             setHistorySearch('');
@@ -408,7 +463,11 @@ const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapte
             cancelled = true;
         };
     }, [pinnedConversationId, conversationId, setMessages]);
-    const historyItems = (0, assistantConversationHistory_1.listAssistantConversations)(courseId ?? null, surface);
+    const historyItems = (0, react_1.useMemo)(() => {
+        if (fsAiUserId)
+            return serverHistory;
+        return (0, assistantConversationHistory_1.listAssistantConversations)(courseId ?? null, surface);
+    }, [fsAiUserId, serverHistory, courseId, surface]);
     const filteredHistoryItems = (0, react_1.useMemo)(() => {
         const q = historySearch.trim().toLowerCase();
         if (!q)
@@ -442,19 +501,26 @@ const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapte
     }, []);
     const handleRemoveHistoryEntry = (0, react_1.useCallback)((id) => {
         antd_1.Modal.confirm({
-            title: 'ลบออกจากรายการ?',
-            content: 'ลบเฉพาะรายการในประวัตินี้ การสนทนาบนเซิร์ฟเวอร์ยังอยู่',
+            title: 'ลบบทสนทนานี้?',
+            content: fsAiUserId
+                ? 'การสนทนาจะถูกลบจากบัญชีของคุณและจะหายจากทุกหน้า'
+                : 'ลบเฉพาะรายการในประวัติบนเครื่องนี้',
             okText: 'ลบ',
             cancelText: 'ยกเลิก',
             okButtonProps: { danger: true },
-            onOk: () => {
-                (0, assistantConversationHistory_1.removeAssistantConversation)(id);
+            onOk: async () => {
+                if (fsAiUserId) {
+                    await fsAiApi_1.fsAiApi.deleteConversation(id);
+                }
+                else {
+                    (0, assistantConversationHistory_1.removeAssistantConversation)(id);
+                }
                 setHistoryRefresh(n => n + 1);
                 if (pinnedConversationId === id)
                     setPinnedConversationId(null);
             },
         });
-    }, [pinnedConversationId]);
+    }, [pinnedConversationId, fsAiUserId]);
     const toggleFullPage = (0, react_1.useCallback)(() => {
         setFullPage(v => {
             const next = !v;
@@ -483,13 +549,22 @@ const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapte
                 (0, assistantUserProfile_1.userProfileOutToAssistant)(serverUserProfile) ??
                 undefined,
         });
-        (0, assistantConversationHistory_1.upsertAssistantConversation)({
-            id: conversationId,
-            courseId: courseId ?? null,
-            surface,
-            title: previewTitle(text),
-        });
-        setHistoryRefresh(n => n + 1);
+        const title = previewTitle(text);
+        if (fsAiUserId) {
+            void fsAiApi_1.fsAiApi.updateConversationTitle(conversationId, title).catch(() => {
+                /* title sync is best-effort */
+            });
+            setHistoryRefresh(n => n + 1);
+        }
+        else {
+            (0, assistantConversationHistory_1.upsertAssistantConversation)({
+                id: conversationId,
+                courseId: courseId ?? null,
+                surface,
+                title,
+            });
+            setHistoryRefresh(n => n + 1);
+        }
         await send(conversationId, { message: text, metadata });
     }, [
         allowed,
@@ -506,6 +581,7 @@ const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapte
         additionalContext,
         send,
         surface,
+        fsAiUserId,
         serverUserProfile,
         userMember,
         userProfile,
@@ -539,21 +615,23 @@ const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapte
                 streamError && (react_1.default.createElement(antd_1.Alert, { type: "error", message: streamError, className: "mb-3", showIcon: true, closable: true })),
                 historyError && (react_1.default.createElement(antd_1.Alert, { type: "warning", message: historyError, className: "mb-3", showIcon: true, closable: true, onClose: () => setHistoryError(null) })),
                 ensureError && (react_1.default.createElement(antd_1.Alert, { type: "error", message: ensureError, className: "mb-3", showIcon: true, closable: true, onClose: () => setEnsureError(null) })),
-                react_1.default.createElement("div", { className: "flex min-h-0 flex-1 flex-col overflow-y-auto" }, inSkillpassOnboarding && fsAiUserId ? (react_1.default.createElement(OnboardingWizard_1.OnboardingWizard, { fsAiUserId: fsAiUserId, restart: profileEditOpen && onboardingComplete, onComplete: handleOnboardingComplete })) : inProfileChat ? (react_1.default.createElement(MessageList_1.MessageList, { messages: profileChatMessages })) : showPicker ? (react_1.default.createElement(ModePicker_1.ModePicker, { disabled: !conversationId || convQuery.isLoading, modes: allowedModes, onSelect: mode => setSelectedMode(mode) })) : (react_1.default.createElement(react_1.default.Fragment, null,
+                react_1.default.createElement("div", { className: `flex min-h-0 flex-1 flex-col ${inSkillpassOnboarding || inProfileChat ? 'overflow-hidden' : 'overflow-y-auto'}` }, inSkillpassOnboarding && fsAiUserId ? (react_1.default.createElement(OnboardingWizard_1.OnboardingWizard, { fsAiUserId: fsAiUserId, restart: profileEditOpen && onboardingComplete, onComplete: handleOnboardingComplete })) : inProfileChat ? (react_1.default.createElement("div", { className: "flex min-h-0 flex-1 flex-col overflow-hidden" },
+                    react_1.default.createElement(MessageList_1.MessageList, { messages: profileChatMessages }))) : showPicker ? (react_1.default.createElement(ModePicker_1.ModePicker, { disabled: !conversationId || convQuery.isLoading, modes: allowedModes, onSelect: mode => setSelectedMode(mode) })) : (react_1.default.createElement(react_1.default.Fragment, null,
                     messages.length === 0 ? (react_1.default.createElement(WelcomeMessage_1.WelcomeMessage, { mode: apiMode })) : (react_1.default.createElement(MessageList_1.MessageList, { messages: messages })),
                     react_1.default.createElement(SuggestedActions_1.SuggestedActions, { mode: apiMode, actions: suggestedActions, disabled: streaming || !conversationId, onSelect: (message, actionIntent) => {
                             void handleSend(message, actionIntent);
                         } })))),
-                !inSkillpassOnboarding && (react_1.default.createElement(Composer_1.Composer, { disabled: inProfileChat
-                        ? !currentProfileStep
-                        : !conversationId || convQuery.isLoading, loading: inProfileChat ? false : streaming, onSend: text => {
-                        if (inProfileChat) {
-                            handleProfileAnswer(text);
-                        }
-                        else {
-                            void handleSend(text);
-                        }
-                    } })))),
+                !inSkillpassOnboarding && (react_1.default.createElement("div", { className: "shrink-0 border-t border-blackFS-600 pt-3" },
+                    react_1.default.createElement(Composer_1.Composer, { disabled: inProfileChat
+                            ? !currentProfileStep
+                            : !conversationId || convQuery.isLoading, loading: inProfileChat ? false : streaming, onSend: text => {
+                            if (inProfileChat) {
+                                handleProfileAnswer(text);
+                            }
+                            else {
+                                void handleSend(text);
+                            }
+                        } }))))),
         react_1.default.createElement(antd_1.Drawer, { title: "\u0E1A\u0E17\u0E2A\u0E19\u0E17\u0E19\u0E32\u0E01\u0E48\u0E2D\u0E19\u0E2B\u0E19\u0E49\u0E32", placement: "left", width: 360, onClose: () => setHistoryOpen(false), open: historyOpen, destroyOnClose: false, extra: react_1.default.createElement(antd_1.Tooltip, { title: "\u0E40\u0E23\u0E34\u0E48\u0E21\u0E1A\u0E17\u0E2A\u0E19\u0E17\u0E19\u0E32\u0E43\u0E2B\u0E21\u0E48" },
                 react_1.default.createElement("button", { type: "button", "aria-label": "\u0E40\u0E23\u0E34\u0E48\u0E21\u0E1A\u0E17\u0E2A\u0E19\u0E17\u0E19\u0E32\u0E43\u0E2B\u0E21\u0E48\u0E08\u0E32\u0E01\u0E41\u0E1C\u0E07\u0E1B\u0E23\u0E30\u0E27\u0E31\u0E15\u0E34", onClick: handleNewConversation, className: "flex h-10 w-10 items-center justify-center rounded-lg text-black/70 transition hover:bg-black/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaryFS-500 dark:text-white/80 dark:hover:bg-white/10" },
                     react_1.default.createElement(LuMessageSquarePlus, { size: 20, "aria-hidden": true }))), styles: {
@@ -563,7 +641,7 @@ const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapte
             } },
             react_1.default.createElement("div", { className: "flex flex-col gap-4" },
                 react_1.default.createElement(antd_1.Input, { allowClear: true, value: historySearch, onChange: e => setHistorySearch(e.target.value), placeholder: "\u0E04\u0E49\u0E19\u0E2B\u0E32\u0E08\u0E32\u0E01\u0E2B\u0E31\u0E27\u0E02\u0E49\u0E2D\u0E2B\u0E23\u0E37\u0E2D\u0E23\u0E2B\u0E31\u0E2A\u2026", "aria-label": "\u0E04\u0E49\u0E19\u0E2B\u0E32\u0E1A\u0E17\u0E2A\u0E19\u0E17\u0E19\u0E32", prefix: react_1.default.createElement(LuSearch, { className: "text-black/40 dark:text-white/45", size: 16, "aria-hidden": true }), className: "rounded-xl border-black/10 bg-white dark:border-white/10 dark:bg-zinc-900" }),
-                historyItems.length === 0 ? (react_1.default.createElement("div", { className: "rounded-xl border border-dashed border-black/15 bg-white px-4 py-8 text-center dark:border-white/15 dark:bg-zinc-900/80" },
+                historyLoading ? (react_1.default.createElement("p", { className: "text-center text-sm text-black/60 dark:text-white/55" }, "\u0E01\u0E33\u0E25\u0E31\u0E07\u0E42\u0E2B\u0E25\u0E14\u0E1B\u0E23\u0E30\u0E27\u0E31\u0E15\u0E34\u2026")) : historyItems.length === 0 ? (react_1.default.createElement("div", { className: "rounded-xl border border-dashed border-black/15 bg-white px-4 py-8 text-center dark:border-white/15 dark:bg-zinc-900/80" },
                     react_1.default.createElement(LuMessageSquare, { className: "mx-auto mb-3 text-black/25 dark:text-white/30", size: 36, "aria-hidden": true }),
                     react_1.default.createElement("p", { className: "text-sm font-medium text-black/75 dark:text-white/75" }, "\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E21\u0E35\u0E1A\u0E17\u0E2A\u0E19\u0E17\u0E19\u0E32\u0E17\u0E35\u0E48\u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01"),
                     react_1.default.createElement("p", { className: "mt-1 text-xs text-black/50 dark:text-white/50" }, "\u0E2A\u0E48\u0E07\u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E43\u0E2B\u0E49\u0E2B\u0E31\u0E27\u0E02\u0E49\u0E2D\u0E1B\u0E23\u0E32\u0E01\u0E0F\u0E17\u0E35\u0E48\u0E19\u0E35\u0E48"))) : filteredHistoryItems.length === 0 ? (react_1.default.createElement("p", { className: "text-center text-sm text-black/60 dark:text-white/55" },

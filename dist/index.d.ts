@@ -15,6 +15,7 @@ export type { AssistantSurface, AssistantHistoryEntry } from './helpers/assistan
 export { readAssistantUserProfile, writeAssistantUserProfile, clearAssistantUserProfile, isAssistantUserProfileComplete, } from './helpers/assistantUserProfile';
 export type { AssistantUserProfile } from './helpers/assistantUserProfile';
 export { userProfileOutToAssistant } from './helpers/assistantUserProfile';
+export { mapApiConversationToHistoryEntry, previewConversationTitle } from './helpers/mapApiConversationHistory';
 export { onboardingApi } from './services/onboardingApi';
 export type { OnboardingSession, OnboardingOutcome, UserEnsureResponse, UserProfileOut, } from './services/onboardingApi';
 export { isSkillpassOnboardingEnabled, oauthClaimsFromUserMember, } from './helpers/oauthUserEnsure';
