@@ -85,6 +85,44 @@ function shouldUseTextPrimary(step: OnboardingStep): boolean {
     return Boolean(step.options?.length);
 }
 
+const TIMEFRAME_OPTION_IDS = new Set(['1m', '3m', '6m', '1y', 'unsure']);
+
+/** Parse Thai/English duration text into a canonical timeframe option id. */
+export function mapTimeframeAnswer(text: string): string | null {
+    const compact = text.replace(/\s+/g, '').toLowerCase();
+    if (!compact) return null;
+    if (/ไม่แน่ใจ|unsure|ไม่รู้|ยังไม่/.test(compact)) return 'unsure';
+    if (compact === '1m' || compact === '3m' || compact === '6m' || compact === '1y') {
+        return compact;
+    }
+
+    const yearMatch = compact.match(/(\d+)\s*(ปี|year|yr|y)/);
+    if (yearMatch) {
+        const years = Number.parseInt(yearMatch[1], 10);
+        if (!Number.isFinite(years)) return null;
+        return years <= 0 ? 'unsure' : '1y';
+    }
+
+    const monthMatch = compact.match(/(\d+)\s*(เดือน|month|mo|m)/);
+    const months = monthMatch
+        ? Number.parseInt(monthMatch[1], 10)
+        : /^\d+$/.test(compact)
+          ? Number.parseInt(compact, 10)
+          : NaN;
+    if (!Number.isFinite(months)) return null;
+    if (months <= 0) return 'unsure';
+    if (months <= 2) return '1m';
+    if (months <= 4) return '3m';
+    if (months <= 9) return '6m';
+    return '1y';
+}
+
+function isTimeframeStep(step: OnboardingStep): boolean {
+    if (step.step_id === 'c2_timeframe') return true;
+    const ids = new Set((step.options ?? []).map(o => o.id));
+    return ids.size > 0 && [...ids].every(id => TIMEFRAME_OPTION_IDS.has(id));
+}
+
 /** Maps typed text to API answer shape (option id + optional other_text). */
 export function buildTextAnswerPayload(
     step: OnboardingStep,
@@ -99,6 +137,13 @@ export function buildTextAnswerPayload(
 
     const matchByLabel = options.find(o => o.label.trim().toLowerCase() === normalized);
     if (matchByLabel) return { answer: matchByLabel.id };
+
+    if (isTimeframeStep(step)) {
+        const mapped = mapTimeframeAnswer(trimmed);
+        if (mapped && options.some(o => o.id === mapped)) {
+            return { answer: mapped };
+        }
+    }
 
     if (step.input_type === 'single_select') {
         const otherOption = options.find(
