@@ -80,17 +80,14 @@ export function buildTextAnswerPayload(
     const matchByLabel = options.find(o => o.label.trim().toLowerCase() === normalized);
     if (matchByLabel) return { answer: matchByLabel.id };
 
-    if (
-        step.input_type === 'single_select' ||
-        (step.input_type === 'text_with_suggestions' && options.length > 0)
-    ) {
+    if (step.input_type === 'single_select') {
         const otherOption = options.find(
             o => o.id === 'other' || o.id.endsWith('_other')
         );
         if (otherOption) {
             return { answer: otherOption.id, otherText: trimmed };
         }
-        return { answer: 'other', otherText: trimmed };
+        return { answer: trimmed };
     }
 
     return { answer: trimmed };
