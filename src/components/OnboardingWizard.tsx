@@ -93,22 +93,27 @@ function shouldUseTextPrimary(step: OnboardingStep): boolean {
     return Boolean(step.options?.length);
 }
 
-const TIMEFRAME_OPTION_IDS = new Set(['1m', '3m', '6m', '1y', 'unsure']);
+const TIMEFRAME_OPTION_IDS = new Set(['3m', '6m', '1y', 'gt1y', 'unsure']);
 
 /** Parse Thai/English duration text into a canonical timeframe option id. */
 export function mapTimeframeAnswer(text: string): string | null {
     const compact = text.replace(/\s+/g, '').toLowerCase();
     if (!compact) return null;
     if (/ไม่แน่ใจ|unsure|ไม่รู้|ยังไม่/.test(compact)) return 'unsure';
-    if (compact === '1m' || compact === '3m' || compact === '6m' || compact === '1y') {
+    if (compact === '3m' || compact === '6m' || compact === '1y' || compact === 'gt1y') {
         return compact;
+    }
+
+    if (/มากกว่า.*1.*ปี|morethan1year|gt1y/i.test(compact)) {
+        return 'gt1y';
     }
 
     const yearMatch = compact.match(/(\d+)\s*(ปี|year|yr|y)/);
     if (yearMatch) {
         const years = Number.parseInt(yearMatch[1], 10);
         if (!Number.isFinite(years)) return null;
-        return years <= 0 ? 'unsure' : '1y';
+        if (years <= 0) return 'unsure';
+        return years > 1 ? 'gt1y' : '1y';
     }
 
     const monthMatch = compact.match(/(\d+)\s*(เดือน|month|mo|m)/);
@@ -119,7 +124,6 @@ export function mapTimeframeAnswer(text: string): string | null {
           : NaN;
     if (!Number.isFinite(months)) return null;
     if (months <= 0) return 'unsure';
-    if (months <= 2) return '1m';
     if (months <= 4) return '3m';
     if (months <= 9) return '6m';
     return '1y';
@@ -368,32 +372,9 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
         const suggestions = step.options ?? [];
         return (
             <div className="flex flex-col gap-3">
-                <input
-                    type="text"
-                    className={fieldInputClass}
-                    value={textAnswer}
-                    onChange={e => setTextAnswer(e.target.value)}
-                    onKeyDown={e => {
-                        if (e.key === 'Enter') handleTextSubmit();
-                    }}
-                    placeholder={textPlaceholderForStep(step.step_id)}
-                    disabled={submitting}
-                    autoFocus
-                />
-                <button
-                    type="button"
-                    className={primaryButtonClass}
-                    disabled={submitting || !textAnswer.trim()}
-                    onClick={handleTextSubmit}>
-                    {submitting ? (
-                        <LuLoader size={18} className="animate-spin" aria-hidden />
-                    ) : (
-                        'ถัดไป'
-                    )}
-                </button>
                 {suggestions.length > 0 ? (
                     <div className="flex flex-col gap-2">
-                        <p className="m-0 text-xs text-blackFS-300">หรือเลือกตัวอย่าง</p>
+                        <p className="m-0 text-xs text-blackFS-300">เลือกตัวอย่างด้านล่าง หรือพิมพ์คำตอบ</p>
                         <div className={`flex flex-wrap gap-2 ${scrollableOptionsClass}`}>
                             {suggestions.map(o => (
                                 <button
@@ -408,6 +389,29 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                         </div>
                     </div>
                 ) : null}
+                <input
+                    type="text"
+                    className={fieldInputClass}
+                    value={textAnswer}
+                    onChange={e => setTextAnswer(e.target.value)}
+                    onKeyDown={e => {
+                        if (e.key === 'Enter') handleTextSubmit();
+                    }}
+                    placeholder={textPlaceholderForStep(step.step_id)}
+                    disabled={submitting}
+                    autoFocus={suggestions.length === 0}
+                />
+                <button
+                    type="button"
+                    className={primaryButtonClass}
+                    disabled={submitting || !textAnswer.trim()}
+                    onClick={handleTextSubmit}>
+                    {submitting ? (
+                        <LuLoader size={18} className="animate-spin" aria-hidden />
+                    ) : (
+                        'ถัดไป'
+                    )}
+                </button>
             </div>
         );
     }, [step, textAnswer, submitting]);
@@ -558,7 +562,16 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                 />
             )}
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-                <MessageList messages={messages} />
+                <MessageList
+                    messages={messages}
+                    footer={
+                        showComposer ? (
+                            <div className="mt-1 flex flex-col gap-2 px-0.5">
+                                {optionButtons}
+                            </div>
+                        ) : null
+                    }
+                />
             </div>
             {outcome?.recommended_courses?.length ? (
                 <div className="mb-3 shrink-0 rounded-xl border border-blackFS-500 bg-blackFS-700/80 px-3.5 py-3 text-sm text-blackFS-100">
@@ -574,7 +587,6 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                 <div className="max-h-[min(55vh,420px)] shrink-0 overflow-y-auto overscroll-contain border-t border-blackFS-600 pt-3">
                     {textPrimaryComposer}
                     {plainTextComposer}
-                    {optionButtons}
                     {step?.input_type === 'optional_text' && (
                         <div className="flex flex-col gap-2">
                             <div className="flex gap-2">

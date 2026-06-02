@@ -36,13 +36,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.MessageList = void 0;
 const react_1 = __importStar(require("react"));
 const MessageBubble_1 = require("./MessageBubble");
-const MessageList = ({ messages }) => {
+const MessageList = ({ messages, footer }) => {
     const bottomRef = (0, react_1.useRef)(null);
     (0, react_1.useEffect)(() => {
         bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages]);
+    }, [messages, footer]);
     return (react_1.default.createElement("div", { className: "flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto overscroll-contain px-1 py-2" },
         messages.map(m => (react_1.default.createElement(MessageBubble_1.MessageBubble, { key: m.id, message: m }))),
+        footer,
         react_1.default.createElement("div", { ref: bottomRef })));
 };
 exports.MessageList = MessageList;
