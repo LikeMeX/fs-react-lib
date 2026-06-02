@@ -75,7 +75,24 @@ function isClosedSingleSelect(step: OnboardingStep): boolean {
 /** Small closed lists (segment, timeframe, …) use chips only — no free-text submit. */
 const CLOSED_SINGLE_SELECT_CHIP_ONLY_MAX = 12;
 
+/** Segment is multi-select in product UX (API may still return single_select until deploy). */
+const MULTI_SELECT_STEP_IDS = new Set(['segment']);
+
+function effectiveInputType(step: OnboardingStep): string {
+    if (MULTI_SELECT_STEP_IDS.has(step.step_id)) {
+        return 'multi_select';
+    }
+    return step.input_type;
+}
+
+function isMultiSelectStep(step: OnboardingStep): boolean {
+    return effectiveInputType(step) === 'multi_select';
+}
+
 function shouldUseTextPrimary(step: OnboardingStep): boolean {
+    if (isMultiSelectStep(step)) {
+        return false;
+    }
     if (
         step.input_type === 'multi_select' ||
         step.input_type === 'number' ||
@@ -283,6 +300,12 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
         otherTextOverride?: string
     ) => {
         if (!step || submitting) return;
+        let resolvedAnswer: string | string[] | number | null = answer;
+        if (step.step_id === 'segment') {
+            if (typeof resolvedAnswer === 'string') {
+                resolvedAnswer = [resolvedAnswer];
+            }
+        }
         const loadingId = `loading-${Date.now()}`;
         setSubmitting(true);
         setError(null);
@@ -297,7 +320,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
             const next = await onboardingApi.submitAnswer(
                 fsAiUserId,
                 step.step_id,
-                answer,
+                resolvedAnswer,
                 resolvedOther
             );
             setSession(next);
@@ -419,11 +442,14 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
     const optionButtons = useMemo(() => {
         if (!step?.options?.length) return null;
         if (shouldUseTextPrimary(step)) return null;
-        if (step.input_type === 'multi_select') {
+        if (isMultiSelectStep(step)) {
             const overMax =
                 step.max_selections != null && multiSelected.length > step.max_selections;
             return (
                 <div className="flex flex-col gap-3">
+                    {step.step_id === 'segment' && step.max_selections == null && (
+                        <p className="m-0 text-xs text-blackFS-300">เลือกได้หลายข้อ</p>
+                    )}
                     {step.max_selections != null && (
                         <p className="m-0 text-xs text-blackFS-300">
                             เลือกได้สูงสุด {step.max_selections} ข้อ
