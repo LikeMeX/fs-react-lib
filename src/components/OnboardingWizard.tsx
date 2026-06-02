@@ -53,11 +53,19 @@ function isTextPrimaryStep(inputType: string): boolean {
     );
 }
 
+/** Steps where typed text is sent as the API answer (backend accepts free text). */
+const FREE_TEXT_SINGLE_SELECT_STEPS = new Set([
+    'c3_target_role',
+    'c5b_current_role',
+]);
+
+function isOtherOptionId(id: string): boolean {
+    return id === 'other' || id.endsWith('_other') || id.endsWith(':other');
+}
+
 /** Steps like segment only accept predefined option ids (no "other"). */
 function hasExplicitOtherOption(step: OnboardingStep): boolean {
-    return (step.options ?? []).some(
-        o => o.id === 'other' || o.id.endsWith('_other')
-    );
+    return (step.options ?? []).some(o => isOtherOptionId(o.id));
 }
 
 function isClosedSingleSelect(step: OnboardingStep): boolean {
@@ -145,10 +153,12 @@ export function buildTextAnswerPayload(
         }
     }
 
+    if (FREE_TEXT_SINGLE_SELECT_STEPS.has(step.step_id) && trimmed) {
+        return { answer: trimmed };
+    }
+
     if (step.input_type === 'single_select') {
-        const otherOption = options.find(
-            o => o.id === 'other' || o.id.endsWith('_other')
-        );
+        const otherOption = options.find(o => isOtherOptionId(o.id));
         if (otherOption) {
             return { answer: otherOption.id, otherText: trimmed };
         }
