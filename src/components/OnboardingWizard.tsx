@@ -53,6 +53,20 @@ function isTextPrimaryStep(inputType: string): boolean {
     );
 }
 
+/** Steps like segment only accept predefined option ids (no "other"). */
+function hasExplicitOtherOption(step: OnboardingStep): boolean {
+    return (step.options ?? []).some(
+        o => o.id === 'other' || o.id.endsWith('_other')
+    );
+}
+
+function isClosedSingleSelect(step: OnboardingStep): boolean {
+    return step.input_type === 'single_select' && !hasExplicitOtherOption(step);
+}
+
+/** Small closed lists (segment, timeframe, …) use chips only — no free-text submit. */
+const CLOSED_SINGLE_SELECT_CHIP_ONLY_MAX = 12;
+
 function shouldUseTextPrimary(step: OnboardingStep): boolean {
     if (
         step.input_type === 'multi_select' ||
@@ -60,6 +74,12 @@ function shouldUseTextPrimary(step: OnboardingStep): boolean {
         step.input_type === 'optional_text'
     ) {
         return false;
+    }
+    if (step.input_type === 'single_select' && isClosedSingleSelect(step)) {
+        const count = step.options?.length ?? 0;
+        if (count > 0 && count <= CLOSED_SINGLE_SELECT_CHIP_ONLY_MAX) {
+            return false;
+        }
     }
     if (isTextPrimaryStep(step.input_type)) return true;
     return Boolean(step.options?.length);
@@ -69,7 +89,7 @@ function shouldUseTextPrimary(step: OnboardingStep): boolean {
 export function buildTextAnswerPayload(
     step: OnboardingStep,
     text: string
-): { answer: string; otherText?: string } {
+): { answer: string; otherText?: string } | null {
     const trimmed = text.trim();
     const options = step.options ?? [];
     const normalized = trimmed.toLowerCase();
@@ -87,10 +107,27 @@ export function buildTextAnswerPayload(
         if (otherOption) {
             return { answer: otherOption.id, otherText: trimmed };
         }
+        if (isClosedSingleSelect(step)) {
+            return null;
+        }
         return { answer: trimmed };
     }
 
     return { answer: trimmed };
+}
+
+function formatSubmitError(e: unknown): string {
+    if (typeof e === 'object' && e !== null && 'response' in e) {
+        const detail = (e as { response?: { data?: { detail?: unknown } } }).response
+            ?.data?.detail;
+        if (typeof detail === 'string') {
+            if (detail.toLowerCase().includes('invalid option')) {
+                return 'กรุณาเลือกจากตัวเลือกด้านล่าง หรือพิมพ์ให้ตรงกับตัวเลือก';
+            }
+            return detail;
+        }
+    }
+    return e instanceof Error ? e.message : 'ส่งคำตอบไม่สำเร็จ';
 }
 
 function textPlaceholderForStep(stepId: string): string {
@@ -231,7 +268,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
             }
         } catch (e) {
             setMessages(prev => prev.filter(m => m.id !== loadingId));
-            setError(e instanceof Error ? e.message : 'ส่งคำตอบไม่สำเร็จ');
+            setError(formatSubmitError(e));
         } finally {
             setSubmitting(false);
         }
@@ -252,6 +289,11 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
         const t = textAnswer.trim();
         if (!t || !step) return;
         const payload = buildTextAnswerPayload(step, t);
+        if (!payload) {
+            setError('กรุณาเลือกจากตัวเลือกด้านล่าง');
+            return;
+        }
+        setError(null);
         void submit(payload.answer, t, payload.otherText);
     };
 
