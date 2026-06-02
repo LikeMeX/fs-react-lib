@@ -320,7 +320,7 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
                         setEnsureError(null);
                     } else {
                         setEnsureError(
-                            e instanceof Error ? e.message : 'เชื่อมต่อ SkillPass ไม่สำเร็จ'
+                            e instanceof Error ? e.message : 'เชื่อมต่อ Futureskill ไม่สำเร็จ'
                         );
                     }
                 }
@@ -1075,7 +1075,7 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
                             ยังไม่มีโปรไฟล์ผู้เรียน
                         </p>
                         <p className="mt-2 text-xs text-black/55 dark:text-white/55">
-                            กรอกแบบสอบถาม SkillPass เพื่อให้ผู้ช่วยปรับคำตอบให้เหมาะกับคุณ
+                            กรอกแบบสอบถาม Futureskill เพื่อให้ผู้ช่วยปรับคำตอบให้เหมาะกับคุณ
                         </p>
                     </div>
                 ) : (

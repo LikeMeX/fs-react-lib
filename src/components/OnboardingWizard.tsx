@@ -23,7 +23,7 @@ export interface OnboardingWizardProps {
 }
 
 const DONE_MESSAGE =
-    'ขอบคุณครับ! บันทึกโปรไฟล์ SkillPass แล้ว ผู้ช่วยจะปรับคำตอบให้เหมาะกับคุณยิ่งขึ้น เริ่มถามอะไรเกี่ยวกับการเรียนได้เลย';
+    'ขอบคุณครับ! บันทึกโปรไฟล์ Futureskill แล้ว ผู้ช่วยจะปรับคำตอบให้เหมาะกับคุณยิ่งขึ้น เริ่มถามอะไรเกี่ยวกับการเรียนได้เลย';
 
 const optionButtonClass =
     'flex min-h-11 w-full touch-manipulation items-center gap-3 rounded-xl border px-3.5 py-2.5 text-left text-sm leading-snug transition duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primaryFS-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-blackFS-800 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none';
@@ -543,7 +543,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
             <div className="flex flex-1 items-center justify-center py-12">
                 <div className="flex flex-col items-center gap-3 text-blackFS-200">
                     <LuLoader size={28} className="animate-spin text-primaryFS-400" aria-hidden />
-                    <p className="m-0 text-sm">กำลังโหลด SkillPass...</p>
+                    <p className="m-0 text-sm">กำลังโหลด Futureskill...</p>
                 </div>
             </div>
         );

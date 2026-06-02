@@ -30,7 +30,7 @@ export const AssistantProfileCard: React.FC<AssistantProfileCardProps> = ({
                     <h3
                         id="assistant-profile-heading"
                         className="m-0 text-sm font-semibold text-blackFS-100">
-                        โปรไฟล์ SkillPass
+                        โปรไฟล์ Futureskill
                     </h3>
                     <p className="m-0 mt-0.5 text-xs text-blackFS-300">
                         บันทึกแล้ว — ผู้ช่วยจะปรับคำตอบให้เหมาะกับคุณ
