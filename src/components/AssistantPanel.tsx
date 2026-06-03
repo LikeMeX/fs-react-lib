@@ -72,6 +72,7 @@ import { mapApiConversationToHistoryEntry } from '../helpers/mapApiConversationH
 import { useAssistantConversation } from '../hooks/useAssistantConversation';
 import { useAssistantPhase } from '../hooks/useAssistantPhase';
 import { useAssistantStream } from '../hooks/useAssistantStream';
+import { useCompactAssistantViewport } from '../hooks/useCompactAssistantViewport';
 import { fsAiApi } from '../services/fsAiApi';
 import {
     AssistantMessage,
@@ -178,6 +179,7 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
     additionalContext,
 }) => {
     const { open, setOpen } = useAssistant();
+    const compactViewport = useCompactAssistantViewport();
     const allowedModes = modes && modes.length ? modes : DEFAULT_MODES;
     const singleMode = allowedModes.length === 1;
     const initialMode = initialModeFor(surface, allowedModes);
@@ -280,6 +282,23 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
         }
         setProfileLoaded(true);
     }, [skillpassOn]);
+
+    useEffect(() => {
+        if (open) return;
+        setHistoryOpen(false);
+    }, [open]);
+
+    /** iOS Safari: fixed 420px panel + Ant Design drawers can leave horizontal offset / body lock after close. */
+    useEffect(() => {
+        if (typeof document === 'undefined') return;
+        if (open) return;
+        document.body.style.removeProperty('overflow');
+        document.body.style.removeProperty('padding-right');
+        document.body.style.removeProperty('width');
+        document.documentElement.style.removeProperty('overflow');
+        document.documentElement.scrollLeft = 0;
+        document.body.scrollLeft = 0;
+    }, [open]);
 
     useEffect(() => {
         if (!profileLoaded || !skillpassOn || !userMember) {
@@ -755,16 +774,25 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
     }
 
     const showPicker = !singleMode && messages.length === 0 && !selectedMode && !pinnedConversationId;
-    const panelWidthStyle = fullPage ? undefined : ASSISTANT_PANEL_WIDTH;
+    const overlayLayout = compactViewport || fullPage;
+    const panelWidthStyle = overlayLayout ? undefined : ASSISTANT_PANEL_WIDTH;
 
     return (
         <>
             <aside
                 aria-hidden={!open ? 'true' : 'false'}
-                style={panelWidthStyle !== undefined ? { width: panelWidthStyle } : undefined}
+                style={
+                    panelWidthStyle !== undefined && open
+                        ? { width: panelWidthStyle }
+                        : !open && compactViewport
+                          ? { width: 0, maxWidth: 0 }
+                          : undefined
+                }
                 className={`fixed z-40 flex flex-col border-l border-blackFS-500 bg-blackFS-800 shadow-2xl transition-[transform,width] duration-300 ease-out ${
-                    fullPage ? 'inset-0 max-w-none' : 'inset-y-0 right-0 max-w-[100vw]'
-                } ${open ? 'translate-x-0' : 'translate-x-full'}`}>
+                    overlayLayout ? 'inset-0 max-w-none' : 'inset-y-0 right-0 max-w-[100vw]'
+                } ${open ? 'translate-x-0' : 'translate-x-full'} ${
+                    !open && compactViewport ? 'pointer-events-none overflow-hidden border-0 p-0' : ''
+                }`}>
                 <div className="flex h-full min-h-0 flex-col p-4">
                     <header className="mb-3 flex shrink-0 items-center gap-1 border-b border-blackFS-600 pb-3">
                         <Tooltip title="บทสนทนาก่อนหน้า">
@@ -803,7 +831,7 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
                                 type="button"
                                 aria-label={fullPage ? 'ย่อแผงผู้ช่วย' : 'ขยายแผงผู้ช่วยเต็มหน้าจอ'}
                                 onClick={toggleFullPage}
-                                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-white/90 transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaryFS-400">
+                                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-white/90 transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaryFS-400 ${compactViewport ? 'hidden' : ''}`}>
                                 {fullPage ? <LuMinimize2 size={20} aria-hidden /> : <LuMaximize2 size={20} aria-hidden />}
                             </button>
                         </Tooltip>

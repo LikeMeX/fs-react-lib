@@ -16,6 +16,10 @@ export {
     isAssistantHiddenAuthPath,
 } from './helpers/assistantAuthGate';
 export { useAssistantVisibilityGate, useAssistantLoggedInGate } from './hooks/useAssistantVisibilityGate';
+export {
+    ASSISTANT_COMPACT_VIEWPORT_QUERY,
+    useCompactAssistantViewport,
+} from './hooks/useCompactAssistantViewport';
 export { buildLearningMetadata } from './helpers/buildLearningMetadata';
 export type { BuildLearningMetadataInput } from './helpers/buildLearningMetadata';
 export {
