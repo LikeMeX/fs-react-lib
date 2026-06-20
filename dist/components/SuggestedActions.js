@@ -1,10 +1,7 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SuggestedActions = exports.SUGGESTED_ACTIONS_BY_MODE = void 0;
-const react_1 = __importDefault(require("react"));
+const jsx_runtime_1 = require("react/jsx-runtime");
 /** Default chips per FS AI learning mode: stable action_intent + Thai label + user message prompt. */
 exports.SUGGESTED_ACTIONS_BY_MODE = {
     general: [
@@ -125,11 +122,10 @@ const SuggestedActions = ({ mode, actions, disabled, onSelect }) => {
     const list = actions.length > 0 ? actions : exports.SUGGESTED_ACTIONS_BY_MODE[mode] ?? [];
     if (!list.length)
         return null;
-    return (react_1.default.createElement("div", { "aria-live": "polite", className: "mt-2" },
-        react_1.default.createElement("div", { role: "list", "aria-label": "\u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21\u0E41\u0E19\u0E30\u0E19\u0E33", className: "-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-0.5 [scrollbar-width:thin] [scrollbar-color:rgba(126,126,130,0.35)_transparent] [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-blackFS-500/80" }, list.map((a, i) => {
-            const label = a.label_th || a.label || a.action_intent;
-            const msg = messageForAction(a);
-            return (react_1.default.createElement("button", { key: `${a.action_intent}-${i}`, type: "button", role: "listitem", disabled: disabled, "aria-label": label, onClick: () => onSelect(msg, a.action_intent), className: "inline-flex min-h-11 shrink-0 touch-manipulation items-center justify-center rounded-full border border-blackFS-500 bg-blackFS-700/90 px-3.5 py-1.5 text-left text-xs font-medium leading-snug text-blackFS-200 shadow-sm transition-[background-color,border-color,transform] duration-150 ease-out hover:border-blackFS-400 hover:bg-blackFS-600 hover:text-blackFS-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primaryFS-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-blackFS-800 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-40 motion-reduce:transition-none motion-reduce:active:scale-100" }, label));
-        }))));
+    return ((0, jsx_runtime_1.jsx)("div", { "aria-live": "polite", className: "mt-2", children: (0, jsx_runtime_1.jsx)("div", { role: "list", "aria-label": "\u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21\u0E41\u0E19\u0E30\u0E19\u0E33", className: "-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-0.5 [scrollbar-width:thin] [scrollbar-color:rgba(126,126,130,0.35)_transparent] [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-blackFS-500/80", children: list.map((a, i) => {
+                const label = a.label_th || a.label || a.action_intent;
+                const msg = messageForAction(a);
+                return ((0, jsx_runtime_1.jsx)("button", { type: "button", role: "listitem", disabled: disabled, "aria-label": label, onClick: () => onSelect(msg, a.action_intent), className: "inline-flex min-h-11 shrink-0 touch-manipulation items-center justify-center rounded-full border border-blackFS-500 bg-blackFS-700/90 px-3.5 py-1.5 text-left text-xs font-medium leading-snug text-blackFS-200 shadow-sm transition-[background-color,border-color,transform] duration-150 ease-out hover:border-blackFS-400 hover:bg-blackFS-600 hover:text-blackFS-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primaryFS-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-blackFS-800 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-40 motion-reduce:transition-none motion-reduce:active:scale-100", children: label }, `${a.action_intent}-${i}`));
+            }) }) }));
 };
 exports.SuggestedActions = SuggestedActions;
