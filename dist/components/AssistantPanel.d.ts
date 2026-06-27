@@ -1,6 +1,6 @@
-import React from 'react';
 import { AssistantSurface } from '../helpers/assistantConversationHistory';
 import { AssistantUserMember, LearningModeApi } from '../types/learningAssistant';
+import React from 'react';
 export interface AssistantPanelProps {
     /** 'general' = no course context. 'enroll'/'watch' for course-bound flows. */
     surface?: AssistantSurface;

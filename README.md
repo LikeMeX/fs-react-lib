@@ -254,6 +254,12 @@ const tokens = require('@likemex/fs-react-lib/tailwind-tokens');
 // → { primaryFS, pinkFS, blackFS, successFS }
 ```
 
+## Prerequisites
+
+- **Node.js** 24 (use `nvm install 24` / `asdf install nodejs 24` or download from nodejs.org)
+- **pnpm** — install with `npm i -g pnpm`
+- Active branch: `feat/enterprise-v2`
+
 ## Development
 
 ```bash

@@ -8,6 +8,7 @@ export { useAssistantStream } from './hooks/useAssistantStream';
 export { canUseLearningAssistant, isFsAiApiConfigured, } from './helpers/canUseLearningAssistant';
 export { ASSISTANT_HIDDEN_AUTH_PATHS, canShowAssistant, canShowLoggedInAssistant, isAssistantHiddenAuthPath, } from './helpers/assistantAuthGate';
 export { useAssistantVisibilityGate, useAssistantLoggedInGate } from './hooks/useAssistantVisibilityGate';
+export { ASSISTANT_COMPACT_VIEWPORT_QUERY, useCompactAssistantViewport, } from './hooks/useCompactAssistantViewport';
 export { buildLearningMetadata } from './helpers/buildLearningMetadata';
 export type { BuildLearningMetadataInput } from './helpers/buildLearningMetadata';
 export { listAssistantConversations, upsertAssistantConversation, removeAssistantConversation, readAssistantFullPagePreference, writeAssistantFullPagePreference, ASSISTANT_HISTORY_STORAGE_KEY, ASSISTANT_FULL_PAGE_STORAGE_KEY, } from './helpers/assistantConversationHistory';
@@ -27,3 +28,4 @@ export { sanitizeAssistantMarkdown, visibleStripped, isOrphanListMarkerLine } fr
 export * from './types/learningAssistant';
 export { createFsAiProxyHandler } from './api-proxy/handler';
 export type { CreateFsAiProxyHandlerOptions } from './api-proxy/handler';
+export * from './i18n';

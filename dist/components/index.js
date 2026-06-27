@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ASSISTANT_PANEL_WIDTH_FULL_VW = exports.ASSISTANT_PANEL_WIDTH = exports.WelcomeMessage = exports.ModePicker = exports.Composer = exports.MessageList = exports.MessageBubble = exports.SUGGESTED_ACTIONS_BY_MODE = exports.SuggestedActions = exports.LearningAssistantShell = exports.AssistantNavButton = exports.AssistantPanel = void 0;
+exports.RadarChart = exports.ASSISTANT_PANEL_WIDTH_FULL_VW = exports.ASSISTANT_PANEL_WIDTH = exports.WelcomeMessage = exports.ModePicker = exports.Composer = exports.MessageList = exports.MessageBubble = exports.SUGGESTED_ACTIONS_BY_MODE = exports.SuggestedActions = exports.LearningAssistantShell = exports.AssistantNavButton = exports.AssistantPanel = void 0;
 var AssistantPanel_1 = require("./AssistantPanel");
 Object.defineProperty(exports, "AssistantPanel", { enumerable: true, get: function () { return AssistantPanel_1.AssistantPanel; } });
 var AssistantNavButton_1 = require("./AssistantNavButton");
@@ -23,3 +23,5 @@ Object.defineProperty(exports, "WelcomeMessage", { enumerable: true, get: functi
 var constants_1 = require("./constants");
 Object.defineProperty(exports, "ASSISTANT_PANEL_WIDTH", { enumerable: true, get: function () { return constants_1.ASSISTANT_PANEL_WIDTH; } });
 Object.defineProperty(exports, "ASSISTANT_PANEL_WIDTH_FULL_VW", { enumerable: true, get: function () { return constants_1.ASSISTANT_PANEL_WIDTH_FULL_VW; } });
+var charts_1 = require("../charts");
+Object.defineProperty(exports, "RadarChart", { enumerable: true, get: function () { return charts_1.RadarChart; } });
