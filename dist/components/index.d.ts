@@ -11,3 +11,5 @@ export { Composer } from './Composer';
 export { ModePicker } from './ModePicker';
 export { WelcomeMessage } from './WelcomeMessage';
 export { ASSISTANT_PANEL_WIDTH, ASSISTANT_PANEL_WIDTH_FULL_VW } from './constants';
+export { RadarChart } from '../charts';
+export type { RadarChartProps, RadarSeries } from '../charts';
