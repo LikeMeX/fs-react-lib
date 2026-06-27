@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Drawer, Dropdown, Input, Modal, Tooltip } from 'antd';
 import {
     LuHistory as LuHistoryRaw,
@@ -88,6 +88,7 @@ import { AssistantProfileCard } from './AssistantProfileCard';
 import { ModePicker } from './ModePicker';
 import { SuggestedActions } from './SuggestedActions';
 import { WelcomeMessage } from './WelcomeMessage';
+import React from 'react';
 
 export interface AssistantPanelProps {
     /** 'general' = no course context. 'enroll'/'watch' for course-bound flows. */

@@ -1,43 +1,11 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AssistantPanel = void 0;
-const react_1 = __importStar(require("react"));
+const jsx_runtime_1 = require("react/jsx-runtime");
+const react_1 = require("react");
 const antd_1 = require("antd");
 const lu_1 = require("react-icons/lu");
 const LuHistory = lu_1.LuHistory;
@@ -49,10 +17,7 @@ const LuSearch = lu_1.LuSearch;
 const LuTrash2 = lu_1.LuTrash2;
 const LuUserCog = lu_1.LuUserCog;
 const LuX = lu_1.LuX;
-const LuMoreVertical = props => (react_1.default.createElement("svg", { xmlns: "http://www.w3.org/2000/svg", width: props.size ?? 18, height: props.size ?? 18, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round", className: props.className, "aria-hidden": props['aria-hidden'] ? 'true' : undefined },
-    react_1.default.createElement("circle", { cx: "12", cy: "5", r: "1" }),
-    react_1.default.createElement("circle", { cx: "12", cy: "12", r: "1" }),
-    react_1.default.createElement("circle", { cx: "12", cy: "19", r: "1" })));
+const LuMoreVertical = props => ((0, jsx_runtime_1.jsxs)("svg", { xmlns: "http://www.w3.org/2000/svg", width: props.size ?? 18, height: props.size ?? 18, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round", className: props.className, "aria-hidden": props['aria-hidden'] ? 'true' : undefined, children: [(0, jsx_runtime_1.jsx)("circle", { cx: "12", cy: "5", r: "1" }), (0, jsx_runtime_1.jsx)("circle", { cx: "12", cy: "12", r: "1" }), (0, jsx_runtime_1.jsx)("circle", { cx: "12", cy: "19", r: "1" })] }));
 const axios_1 = __importDefault(require("axios"));
 const assistantContext_1 = require("../contexts/assistantContext");
 const assistantConversationHistory_1 = require("../helpers/assistantConversationHistory");
@@ -65,6 +30,7 @@ const mapApiConversationHistory_1 = require("../helpers/mapApiConversationHistor
 const useAssistantConversation_1 = require("../hooks/useAssistantConversation");
 const useAssistantPhase_1 = require("../hooks/useAssistantPhase");
 const useAssistantStream_1 = require("../hooks/useAssistantStream");
+const useCompactAssistantViewport_1 = require("../hooks/useCompactAssistantViewport");
 const fsAiApi_1 = require("../services/fsAiApi");
 const onboardingApi_1 = require("../services/onboardingApi");
 const constants_1 = require("./constants");
@@ -124,6 +90,7 @@ function initialModeFor(surface, modes) {
 }
 const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapterId, lessonComplete = false, courseComplete = false, modes, userMember, canUse, getVideoTimestamp, learningPathId, learningPathName, additionalContext, }) => {
     const { open, setOpen } = (0, assistantContext_1.useAssistant)();
+    const compactViewport = (0, useCompactAssistantViewport_1.useCompactAssistantViewport)();
     const allowedModes = modes && modes.length ? modes : DEFAULT_MODES;
     const singleMode = allowedModes.length === 1;
     const initialMode = initialModeFor(surface, allowedModes);
@@ -201,6 +168,24 @@ const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapte
         setProfileLoaded(true);
     }, [skillpassOn]);
     (0, react_1.useEffect)(() => {
+        if (open)
+            return;
+        setHistoryOpen(false);
+    }, [open]);
+    /** iOS Safari: fixed 420px panel + Ant Design drawers can leave horizontal offset / body lock after close. */
+    (0, react_1.useEffect)(() => {
+        if (typeof document === 'undefined')
+            return;
+        if (open)
+            return;
+        document.body.style.removeProperty('overflow');
+        document.body.style.removeProperty('padding-right');
+        document.body.style.removeProperty('width');
+        document.documentElement.style.removeProperty('overflow');
+        document.documentElement.scrollLeft = 0;
+        document.body.scrollLeft = 0;
+    }, [open]);
+    (0, react_1.useEffect)(() => {
         if (!profileLoaded || !skillpassOn || !userMember) {
             if (skillpassOn && profileLoaded && !userMember) {
                 setEnsureReady(true);
@@ -242,7 +227,7 @@ const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapte
                         setEnsureError(null);
                     }
                     else {
-                        setEnsureError(e instanceof Error ? e.message : 'เชื่อมต่อ SkillPass ไม่สำเร็จ');
+                        setEnsureError(e instanceof Error ? e.message : 'เชื่อมต่อ Futureskill ไม่สำเร็จ');
                     }
                 }
             }
@@ -657,111 +642,57 @@ const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapte
         return null;
     }
     const showPicker = !singleMode && messages.length === 0 && !selectedMode && !pinnedConversationId;
-    const panelWidthStyle = fullPage ? undefined : constants_1.ASSISTANT_PANEL_WIDTH;
-    return (react_1.default.createElement(react_1.default.Fragment, null,
-        react_1.default.createElement("aside", { "aria-hidden": !open ? 'true' : 'false', style: panelWidthStyle !== undefined ? { width: panelWidthStyle } : undefined, className: `fixed z-40 flex flex-col border-l border-blackFS-500 bg-blackFS-800 shadow-2xl transition-[transform,width] duration-300 ease-out ${fullPage ? 'inset-0 max-w-none' : 'inset-y-0 right-0 max-w-[100vw]'} ${open ? 'translate-x-0' : 'translate-x-full'}` },
-            react_1.default.createElement("div", { className: "flex h-full min-h-0 flex-col p-4" },
-                react_1.default.createElement("header", { className: "mb-3 flex shrink-0 items-center gap-1 border-b border-blackFS-600 pb-3" },
-                    react_1.default.createElement(antd_1.Tooltip, { title: "\u0E1A\u0E17\u0E2A\u0E19\u0E17\u0E19\u0E32\u0E01\u0E48\u0E2D\u0E19\u0E2B\u0E19\u0E49\u0E32" },
-                        react_1.default.createElement("button", { type: "button", "aria-label": "\u0E40\u0E25\u0E37\u0E2D\u0E01\u0E1A\u0E17\u0E2A\u0E19\u0E17\u0E19\u0E32\u0E01\u0E48\u0E2D\u0E19\u0E2B\u0E19\u0E49\u0E32", onClick: openHistory, className: "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-white/90 transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaryFS-400" },
-                            react_1.default.createElement(LuHistory, { size: 20, "aria-hidden": true }))),
-                    react_1.default.createElement("h2", { className: "min-w-0 flex-1 truncate text-center text-sm font-semibold text-white" }, "\u0E1C\u0E39\u0E49\u0E0A\u0E48\u0E27\u0E22\u0E01\u0E32\u0E23\u0E40\u0E23\u0E35\u0E22\u0E19"),
-                    react_1.default.createElement(antd_1.Tooltip, { title: "\u0E2A\u0E19\u0E17\u0E19\u0E32\u0E43\u0E2B\u0E21\u0E48" },
-                        react_1.default.createElement("button", { type: "button", "aria-label": "\u0E40\u0E23\u0E34\u0E48\u0E21\u0E1A\u0E17\u0E2A\u0E19\u0E17\u0E19\u0E32\u0E43\u0E2B\u0E21\u0E48", onClick: handleNewConversation, className: "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-white/90 transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaryFS-400" },
-                            react_1.default.createElement(LuMessageSquarePlus, { size: 20, "aria-hidden": true }))),
-                    react_1.default.createElement(antd_1.Tooltip, { title: profileEditOpen ? 'กลับไปสนทนา' : 'แก้ไขโปรไฟล์ผู้เรียน' },
-                        react_1.default.createElement("button", { type: "button", "aria-label": profileEditOpen ? 'กลับไปสนทนา' : 'แก้ไขโปรไฟล์ผู้เรียน', onClick: profileEditOpen ? cancelProfileEdit : openProfileMenu, disabled: profileEditOpen ? false : !canOpenProfileMenu, className: "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-white/90 transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaryFS-400 disabled:opacity-40" },
-                            react_1.default.createElement(LuUserCog, { size: 20, "aria-hidden": true }))),
-                    react_1.default.createElement(antd_1.Tooltip, { title: fullPage ? 'โหมดแผงข้าง' : 'โหมดเต็มหน้าจอ' },
-                        react_1.default.createElement("button", { type: "button", "aria-label": fullPage ? 'ย่อแผงผู้ช่วย' : 'ขยายแผงผู้ช่วยเต็มหน้าจอ', onClick: toggleFullPage, className: "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-white/90 transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaryFS-400" }, fullPage ? react_1.default.createElement(LuMinimize2, { size: 20, "aria-hidden": true }) : react_1.default.createElement(LuMaximize2, { size: 20, "aria-hidden": true }))),
-                    react_1.default.createElement(antd_1.Tooltip, { title: "\u0E1B\u0E34\u0E14\u0E1C\u0E39\u0E49\u0E0A\u0E48\u0E27\u0E22" },
-                        react_1.default.createElement("button", { type: "button", "aria-label": "\u0E1B\u0E34\u0E14\u0E1C\u0E39\u0E49\u0E0A\u0E48\u0E27\u0E22\u0E01\u0E32\u0E23\u0E40\u0E23\u0E35\u0E22\u0E19", onClick: () => setOpen(false), className: "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-white/90 transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaryFS-400" },
-                            react_1.default.createElement(LuX, { size: 20, "aria-hidden": true })))),
-                lastError === 'FORBIDDEN' && (react_1.default.createElement(antd_1.Alert, { type: "error", message: "\u0E44\u0E21\u0E48\u0E21\u0E35\u0E2A\u0E34\u0E17\u0E18\u0E34\u0E4C\u0E43\u0E0A\u0E49\u0E07\u0E32\u0E19\u0E1C\u0E39\u0E49\u0E0A\u0E48\u0E27\u0E22", className: "mb-3", showIcon: true })),
-                convQuery.isError && (react_1.default.createElement(antd_1.Alert, { type: "error", message: "\u0E44\u0E21\u0E48\u0E2A\u0E32\u0E21\u0E32\u0E23\u0E16\u0E2A\u0E23\u0E49\u0E32\u0E07\u0E1A\u0E17\u0E2A\u0E19\u0E17\u0E19\u0E32\u0E44\u0E14\u0E49", className: "mb-3", showIcon: true })),
-                streamError && (react_1.default.createElement(antd_1.Alert, { type: "error", message: streamError, className: "mb-3", showIcon: true, closable: true })),
-                historyError && (react_1.default.createElement(antd_1.Alert, { type: "warning", message: historyError, className: "mb-3", showIcon: true, closable: true, onClose: () => setHistoryError(null) })),
-                ensureError && (react_1.default.createElement(antd_1.Alert, { type: "error", message: ensureError, className: "mb-3", showIcon: true, closable: true, onClose: () => setEnsureError(null) })),
-                react_1.default.createElement("div", { className: `flex min-h-0 flex-1 flex-col ${inSkillpassOnboarding || inProfileChat ? 'overflow-hidden' : 'overflow-y-auto'}` }, inSkillpassOnboarding && fsAiUserId ? (react_1.default.createElement(OnboardingWizard_1.OnboardingWizard, { fsAiUserId: fsAiUserId, restart: profileEditOpen && (onboardingComplete || hasSavedProfile), onComplete: handleOnboardingComplete })) : inProfileChat ? (react_1.default.createElement("div", { className: "flex min-h-0 flex-1 flex-col overflow-hidden" },
-                    react_1.default.createElement(MessageList_1.MessageList, { messages: profileChatMessages }))) : showPicker ? (react_1.default.createElement(ModePicker_1.ModePicker, { disabled: !chatInputReady, modes: allowedModes, onSelect: mode => setSelectedMode(mode) })) : (react_1.default.createElement(react_1.default.Fragment, null,
-                    messages.length === 0 ? (react_1.default.createElement(WelcomeMessage_1.WelcomeMessage, { mode: apiMode })) : (react_1.default.createElement(MessageList_1.MessageList, { messages: messages })),
-                    react_1.default.createElement(SuggestedActions_1.SuggestedActions, { mode: apiMode, actions: suggestedActions, disabled: streaming || !chatInputReady || isCreatingConversation, onSelect: (message, actionIntent) => {
-                            void handleSend(message, actionIntent);
-                        } })))),
-                !inSkillpassOnboarding && (react_1.default.createElement("div", { className: "shrink-0 border-t border-blackFS-600 pt-3" },
-                    react_1.default.createElement(Composer_1.Composer, { disabled: inProfileChat
-                            ? !currentProfileStep
-                            : !chatInputReady, loading: inProfileChat ? false : streaming || isCreatingConversation, onSend: text => {
-                            if (inProfileChat) {
-                                handleProfileAnswer(text);
-                            }
-                            else {
-                                void handleSend(text);
-                            }
-                        } }))))),
-        react_1.default.createElement(antd_1.Drawer, { title: "\u0E1A\u0E17\u0E2A\u0E19\u0E17\u0E19\u0E32\u0E01\u0E48\u0E2D\u0E19\u0E2B\u0E19\u0E49\u0E32", placement: "left", width: 360, onClose: () => setHistoryOpen(false), open: historyOpen, destroyOnClose: false, extra: react_1.default.createElement(antd_1.Tooltip, { title: "\u0E40\u0E23\u0E34\u0E48\u0E21\u0E1A\u0E17\u0E2A\u0E19\u0E17\u0E19\u0E32\u0E43\u0E2B\u0E21\u0E48" },
-                react_1.default.createElement("button", { type: "button", "aria-label": "\u0E40\u0E23\u0E34\u0E48\u0E21\u0E1A\u0E17\u0E2A\u0E19\u0E17\u0E19\u0E32\u0E43\u0E2B\u0E21\u0E48\u0E08\u0E32\u0E01\u0E41\u0E1C\u0E07\u0E1B\u0E23\u0E30\u0E27\u0E31\u0E15\u0E34", onClick: handleNewConversation, className: "flex h-10 w-10 items-center justify-center rounded-lg text-black/70 transition hover:bg-black/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaryFS-500 dark:text-white/80 dark:hover:bg-white/10" },
-                    react_1.default.createElement(LuMessageSquarePlus, { size: 20, "aria-hidden": true }))), styles: {
-                body: { paddingTop: 12, paddingBottom: 16 },
-            }, classNames: {
-                body: 'bg-zinc-50 dark:bg-zinc-950',
-            } },
-            react_1.default.createElement("div", { className: "flex flex-col gap-4" },
-                react_1.default.createElement(antd_1.Input, { allowClear: true, value: historySearch, onChange: e => setHistorySearch(e.target.value), placeholder: "\u0E04\u0E49\u0E19\u0E2B\u0E32\u0E08\u0E32\u0E01\u0E2B\u0E31\u0E27\u0E02\u0E49\u0E2D\u0E2B\u0E23\u0E37\u0E2D\u0E23\u0E2B\u0E31\u0E2A\u2026", "aria-label": "\u0E04\u0E49\u0E19\u0E2B\u0E32\u0E1A\u0E17\u0E2A\u0E19\u0E17\u0E19\u0E32", prefix: react_1.default.createElement(LuSearch, { className: "text-black/40 dark:text-white/45", size: 16, "aria-hidden": true }), className: "rounded-xl border-black/10 bg-white dark:border-white/10 dark:bg-zinc-900" }),
-                historyLoading ? (react_1.default.createElement("p", { className: "text-center text-sm text-black/60 dark:text-white/55" }, "\u0E01\u0E33\u0E25\u0E31\u0E07\u0E42\u0E2B\u0E25\u0E14\u0E1B\u0E23\u0E30\u0E27\u0E31\u0E15\u0E34\u2026")) : historyItems.length === 0 ? (react_1.default.createElement("div", { className: "rounded-xl border border-dashed border-black/15 bg-white px-4 py-8 text-center dark:border-white/15 dark:bg-zinc-900/80" },
-                    react_1.default.createElement(LuMessageSquare, { className: "mx-auto mb-3 text-black/25 dark:text-white/30", size: 36, "aria-hidden": true }),
-                    react_1.default.createElement("p", { className: "text-sm font-medium text-black/75 dark:text-white/75" }, "\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E21\u0E35\u0E1A\u0E17\u0E2A\u0E19\u0E17\u0E19\u0E32\u0E17\u0E35\u0E48\u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01"),
-                    react_1.default.createElement("p", { className: "mt-1 text-xs text-black/50 dark:text-white/50" }, "\u0E2A\u0E48\u0E07\u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E43\u0E2B\u0E49\u0E2B\u0E31\u0E27\u0E02\u0E49\u0E2D\u0E1B\u0E23\u0E32\u0E01\u0E0F\u0E17\u0E35\u0E48\u0E19\u0E35\u0E48"))) : filteredHistoryItems.length === 0 ? (react_1.default.createElement("p", { className: "text-center text-sm text-black/60 dark:text-white/55" },
-                    "\u0E44\u0E21\u0E48\u0E1E\u0E1A\u0E1A\u0E17\u0E2A\u0E19\u0E17\u0E19\u0E32\u0E17\u0E35\u0E48\u0E15\u0E23\u0E07\u0E01\u0E31\u0E1A \u201C",
-                    historySearch.trim(),
-                    "\u201D")) : (react_1.default.createElement("div", { className: "flex flex-col gap-5" }, HISTORY_BUCKET_ORDER.map(bucket => {
-                    const items = groupedHistory.get(bucket) ?? [];
-                    if (!items.length)
-                        return null;
-                    return (react_1.default.createElement("section", { key: bucket, "aria-labelledby": `history-bucket-${bucket}` },
-                        react_1.default.createElement("h3", { id: `history-bucket-${bucket}`, className: "mb-2 px-0.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-black/45 dark:text-white/45" }, HISTORY_BUCKET_LABELS[bucket]),
-                        react_1.default.createElement("ul", { className: "m-0 list-none space-y-2 p-0", role: "list" }, items.map(entry => {
-                            const active = entry.id === conversationId;
-                            const dateLabel = new Date(entry.updatedAt).toLocaleString(undefined, {
-                                dateStyle: 'medium',
-                                timeStyle: 'short',
-                            });
-                            return (react_1.default.createElement("li", { key: entry.id },
-                                react_1.default.createElement("div", { className: `flex min-h-[52px] overflow-hidden rounded-xl border transition-colors ${active
-                                        ? 'border-primaryFS-500/50 bg-primaryFS-500/15 shadow-sm dark:bg-primaryFS-500/20'
-                                        : 'border-black/8 bg-white hover:border-black/15 hover:bg-zinc-50/90 dark:border-white/10 dark:bg-zinc-900 dark:hover:border-white/18 dark:hover:bg-zinc-800/90'}` },
-                                    react_1.default.createElement(antd_1.Tooltip, { title: entry.title, placement: "right" },
-                                        react_1.default.createElement("button", { type: "button", "aria-current": active ? 'true' : undefined, "aria-label": `เปิดบทสนทนา: ${entry.title}`, onClick: () => handleSelectHistory(entry.id), className: "flex min-h-[52px] min-w-0 flex-1 items-start gap-3 px-3 py-3 text-left touch-manipulation" },
-                                            react_1.default.createElement("span", { className: `mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${active
-                                                    ? 'bg-primaryFS-500/25 text-primaryFS-600 dark:text-primaryFS-300'
-                                                    : 'bg-black/[0.06] text-black/50 dark:bg-white/10 dark:text-white/55'}` },
-                                                react_1.default.createElement(LuMessageSquare, { size: 18, "aria-hidden": true })),
-                                            react_1.default.createElement("span", { className: "min-w-0 flex-1" },
-                                                react_1.default.createElement("span", { className: "line-clamp-2 text-sm font-medium leading-snug text-black/90 dark:text-white/90" }, entry.title),
-                                                react_1.default.createElement("time", { dateTime: new Date(entry.updatedAt).toISOString(), className: "mt-1 block text-xs tabular-nums text-black/50 dark:text-white/50" }, dateLabel)))),
-                                    react_1.default.createElement(antd_1.Dropdown, { trigger: ['click'], placement: "bottomRight", menu: {
-                                            items: [
-                                                {
-                                                    key: 'remove',
-                                                    danger: true,
-                                                    icon: react_1.default.createElement(LuTrash2, { size: 16, "aria-hidden": true }),
-                                                    label: 'ลบจากรายการ',
-                                                    onClick: () => handleRemoveHistoryEntry(entry.id),
-                                                },
-                                            ],
-                                        } },
-                                        react_1.default.createElement("button", { type: "button", "aria-label": `ตัวเลือกสำหรับ ${entry.title}`, onClick: e => e.stopPropagation(), className: "flex h-[52px] w-11 shrink-0 items-center justify-center border-l border-black/8 text-black/45 transition hover:bg-black/[0.04] hover:text-black/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primaryFS-500 dark:border-white/10 dark:text-white/50 dark:hover:bg-white/5 dark:hover:text-white/80" },
-                                            react_1.default.createElement(LuMoreVertical, { size: 18, "aria-hidden": true }))))));
-                        }))));
-                }))))),
-        react_1.default.createElement(antd_1.Drawer, { title: "\u0E41\u0E01\u0E49\u0E44\u0E02\u0E42\u0E1B\u0E23\u0E44\u0E1F\u0E25\u0E4C\u0E1C\u0E39\u0E49\u0E40\u0E23\u0E35\u0E22\u0E19", placement: "right", width: 360, onClose: () => setProfileMenuOpen(false), open: profileMenuOpen, destroyOnClose: false, styles: {
-                body: { paddingTop: 12, paddingBottom: 16 },
-            }, classNames: {
-                body: 'bg-zinc-50 dark:bg-zinc-950',
-            } }, effectiveProfile && hasSavedProfile ? (react_1.default.createElement(AssistantProfileCard_1.AssistantProfileCard, { profile: effectiveProfile, summary: profileSummaryTh, onEdit: handleProfileEditFromMenu, className: "mb-0" })) : skillpassOn ? (react_1.default.createElement("div", { className: "rounded-xl border border-dashed border-black/15 bg-white px-4 py-8 text-center dark:border-white/15 dark:bg-zinc-900/80" },
-            react_1.default.createElement("p", { className: "text-sm font-medium text-black/75 dark:text-white/75" }, "\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E21\u0E35\u0E42\u0E1B\u0E23\u0E44\u0E1F\u0E25\u0E4C\u0E1C\u0E39\u0E49\u0E40\u0E23\u0E35\u0E22\u0E19"),
-            react_1.default.createElement("p", { className: "mt-2 text-xs text-black/55 dark:text-white/55" }, "\u0E01\u0E23\u0E2D\u0E01\u0E41\u0E1A\u0E1A\u0E2A\u0E2D\u0E1A\u0E16\u0E32\u0E21 SkillPass \u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E43\u0E2B\u0E49\u0E1C\u0E39\u0E49\u0E0A\u0E48\u0E27\u0E22\u0E1B\u0E23\u0E31\u0E1A\u0E04\u0E33\u0E15\u0E2D\u0E1A\u0E43\u0E2B\u0E49\u0E40\u0E2B\u0E21\u0E32\u0E30\u0E01\u0E31\u0E1A\u0E04\u0E38\u0E13"))) : (react_1.default.createElement("div", { className: "flex flex-col gap-3" },
-            react_1.default.createElement("p", { className: "m-0 text-sm text-black/70 dark:text-white/70" }, "\u0E15\u0E31\u0E49\u0E07\u0E04\u0E48\u0E32\u0E42\u0E1B\u0E23\u0E44\u0E1F\u0E25\u0E4C\u0E1C\u0E39\u0E49\u0E40\u0E23\u0E35\u0E22\u0E19\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E43\u0E2B\u0E49\u0E1C\u0E39\u0E49\u0E0A\u0E48\u0E27\u0E22\u0E41\u0E19\u0E30\u0E19\u0E33\u0E40\u0E19\u0E37\u0E49\u0E2D\u0E2B\u0E32\u0E44\u0E14\u0E49\u0E15\u0E23\u0E07\u0E01\u0E31\u0E1A\u0E40\u0E1B\u0E49\u0E32\u0E2B\u0E21\u0E32\u0E22\u0E02\u0E2D\u0E07\u0E04\u0E38\u0E13"),
-            react_1.default.createElement("button", { type: "button", onClick: handleProfileEditFromMenu, className: "inline-flex min-h-10 items-center justify-center rounded-lg bg-primaryFS-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-primaryFS-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaryFS-400" }, "\u0E40\u0E23\u0E34\u0E48\u0E21\u0E15\u0E31\u0E49\u0E07\u0E04\u0E48\u0E32\u0E42\u0E1B\u0E23\u0E44\u0E1F\u0E25\u0E4C"))))));
+    const overlayLayout = compactViewport || fullPage;
+    const panelWidthStyle = overlayLayout ? undefined : constants_1.ASSISTANT_PANEL_WIDTH;
+    return ((0, jsx_runtime_1.jsxs)(jsx_runtime_1.Fragment, { children: [(0, jsx_runtime_1.jsx)("aside", { "aria-hidden": !open ? 'true' : 'false', style: panelWidthStyle !== undefined && open
+                    ? { width: panelWidthStyle }
+                    : !open && compactViewport
+                        ? { width: 0, maxWidth: 0 }
+                        : undefined, className: `fixed z-40 flex flex-col border-l border-blackFS-500 bg-blackFS-800 shadow-2xl transition-[transform,width] duration-300 ease-out ${overlayLayout ? 'inset-0 max-w-none' : 'inset-y-0 right-0 max-w-[100vw]'} ${open ? 'translate-x-0' : 'translate-x-full'} ${!open && compactViewport ? 'pointer-events-none overflow-hidden border-0 p-0' : ''}`, children: (0, jsx_runtime_1.jsxs)("div", { className: "flex h-full min-h-0 flex-col p-4", children: [(0, jsx_runtime_1.jsxs)("header", { className: "mb-3 flex shrink-0 items-center gap-1 border-b border-blackFS-600 pb-3", children: [(0, jsx_runtime_1.jsx)(antd_1.Tooltip, { title: "\u0E1A\u0E17\u0E2A\u0E19\u0E17\u0E19\u0E32\u0E01\u0E48\u0E2D\u0E19\u0E2B\u0E19\u0E49\u0E32", children: (0, jsx_runtime_1.jsx)("button", { type: "button", "aria-label": "\u0E40\u0E25\u0E37\u0E2D\u0E01\u0E1A\u0E17\u0E2A\u0E19\u0E17\u0E19\u0E32\u0E01\u0E48\u0E2D\u0E19\u0E2B\u0E19\u0E49\u0E32", onClick: openHistory, className: "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-white/90 transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaryFS-400", children: (0, jsx_runtime_1.jsx)(LuHistory, { size: 20, "aria-hidden": true }) }) }), (0, jsx_runtime_1.jsx)("h2", { className: "min-w-0 flex-1 truncate text-center text-sm font-semibold text-white", children: "\u0E1C\u0E39\u0E49\u0E0A\u0E48\u0E27\u0E22\u0E01\u0E32\u0E23\u0E40\u0E23\u0E35\u0E22\u0E19" }), (0, jsx_runtime_1.jsx)(antd_1.Tooltip, { title: "\u0E2A\u0E19\u0E17\u0E19\u0E32\u0E43\u0E2B\u0E21\u0E48", children: (0, jsx_runtime_1.jsx)("button", { type: "button", "aria-label": "\u0E40\u0E23\u0E34\u0E48\u0E21\u0E1A\u0E17\u0E2A\u0E19\u0E17\u0E19\u0E32\u0E43\u0E2B\u0E21\u0E48", onClick: handleNewConversation, className: "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-white/90 transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaryFS-400", children: (0, jsx_runtime_1.jsx)(LuMessageSquarePlus, { size: 20, "aria-hidden": true }) }) }), (0, jsx_runtime_1.jsx)(antd_1.Tooltip, { title: profileEditOpen ? 'กลับไปสนทนา' : 'แก้ไขโปรไฟล์ผู้เรียน', children: (0, jsx_runtime_1.jsx)("button", { type: "button", "aria-label": profileEditOpen ? 'กลับไปสนทนา' : 'แก้ไขโปรไฟล์ผู้เรียน', onClick: profileEditOpen ? cancelProfileEdit : openProfileMenu, disabled: profileEditOpen ? false : !canOpenProfileMenu, className: "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-white/90 transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaryFS-400 disabled:opacity-40", children: (0, jsx_runtime_1.jsx)(LuUserCog, { size: 20, "aria-hidden": true }) }) }), (0, jsx_runtime_1.jsx)(antd_1.Tooltip, { title: fullPage ? 'โหมดแผงข้าง' : 'โหมดเต็มหน้าจอ', children: (0, jsx_runtime_1.jsx)("button", { type: "button", "aria-label": fullPage ? 'ย่อแผงผู้ช่วย' : 'ขยายแผงผู้ช่วยเต็มหน้าจอ', onClick: toggleFullPage, className: `flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-white/90 transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaryFS-400 ${compactViewport ? 'hidden' : ''}`, children: fullPage ? (0, jsx_runtime_1.jsx)(LuMinimize2, { size: 20, "aria-hidden": true }) : (0, jsx_runtime_1.jsx)(LuMaximize2, { size: 20, "aria-hidden": true }) }) }), (0, jsx_runtime_1.jsx)(antd_1.Tooltip, { title: "\u0E1B\u0E34\u0E14\u0E1C\u0E39\u0E49\u0E0A\u0E48\u0E27\u0E22", children: (0, jsx_runtime_1.jsx)("button", { type: "button", "aria-label": "\u0E1B\u0E34\u0E14\u0E1C\u0E39\u0E49\u0E0A\u0E48\u0E27\u0E22\u0E01\u0E32\u0E23\u0E40\u0E23\u0E35\u0E22\u0E19", onClick: () => setOpen(false), className: "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-white/90 transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaryFS-400", children: (0, jsx_runtime_1.jsx)(LuX, { size: 20, "aria-hidden": true }) }) })] }), lastError === 'FORBIDDEN' && ((0, jsx_runtime_1.jsx)(antd_1.Alert, { type: "error", message: "\u0E44\u0E21\u0E48\u0E21\u0E35\u0E2A\u0E34\u0E17\u0E18\u0E34\u0E4C\u0E43\u0E0A\u0E49\u0E07\u0E32\u0E19\u0E1C\u0E39\u0E49\u0E0A\u0E48\u0E27\u0E22", className: "mb-3", showIcon: true })), convQuery.isError && ((0, jsx_runtime_1.jsx)(antd_1.Alert, { type: "error", message: "\u0E44\u0E21\u0E48\u0E2A\u0E32\u0E21\u0E32\u0E23\u0E16\u0E2A\u0E23\u0E49\u0E32\u0E07\u0E1A\u0E17\u0E2A\u0E19\u0E17\u0E19\u0E32\u0E44\u0E14\u0E49", className: "mb-3", showIcon: true })), streamError && ((0, jsx_runtime_1.jsx)(antd_1.Alert, { type: "error", message: streamError, className: "mb-3", showIcon: true, closable: true })), historyError && ((0, jsx_runtime_1.jsx)(antd_1.Alert, { type: "warning", message: historyError, className: "mb-3", showIcon: true, closable: true, onClose: () => setHistoryError(null) })), ensureError && ((0, jsx_runtime_1.jsx)(antd_1.Alert, { type: "error", message: ensureError, className: "mb-3", showIcon: true, closable: true, onClose: () => setEnsureError(null) })), (0, jsx_runtime_1.jsx)("div", { className: `flex min-h-0 flex-1 flex-col ${inSkillpassOnboarding || inProfileChat ? 'overflow-hidden' : 'overflow-y-auto'}`, children: inSkillpassOnboarding && fsAiUserId ? ((0, jsx_runtime_1.jsx)(OnboardingWizard_1.OnboardingWizard, { fsAiUserId: fsAiUserId, restart: profileEditOpen && (onboardingComplete || hasSavedProfile), onComplete: handleOnboardingComplete })) : inProfileChat ? ((0, jsx_runtime_1.jsx)("div", { className: "flex min-h-0 flex-1 flex-col overflow-hidden", children: (0, jsx_runtime_1.jsx)(MessageList_1.MessageList, { messages: profileChatMessages }) })) : showPicker ? ((0, jsx_runtime_1.jsx)(ModePicker_1.ModePicker, { disabled: !chatInputReady, modes: allowedModes, onSelect: mode => setSelectedMode(mode) })) : ((0, jsx_runtime_1.jsxs)(jsx_runtime_1.Fragment, { children: [messages.length === 0 ? ((0, jsx_runtime_1.jsx)(WelcomeMessage_1.WelcomeMessage, { mode: apiMode })) : ((0, jsx_runtime_1.jsx)(MessageList_1.MessageList, { messages: messages })), (0, jsx_runtime_1.jsx)(SuggestedActions_1.SuggestedActions, { mode: apiMode, actions: suggestedActions, disabled: streaming || !chatInputReady || isCreatingConversation, onSelect: (message, actionIntent) => {
+                                            void handleSend(message, actionIntent);
+                                        } })] })) }), !inSkillpassOnboarding && ((0, jsx_runtime_1.jsx)("div", { className: "shrink-0 border-t border-blackFS-600 pt-3", children: (0, jsx_runtime_1.jsx)(Composer_1.Composer, { disabled: inProfileChat
+                                    ? !currentProfileStep
+                                    : !chatInputReady, loading: inProfileChat ? false : streaming || isCreatingConversation, onSend: text => {
+                                    if (inProfileChat) {
+                                        handleProfileAnswer(text);
+                                    }
+                                    else {
+                                        void handleSend(text);
+                                    }
+                                } }) }))] }) }), (0, jsx_runtime_1.jsx)(antd_1.Drawer, { title: "\u0E1A\u0E17\u0E2A\u0E19\u0E17\u0E19\u0E32\u0E01\u0E48\u0E2D\u0E19\u0E2B\u0E19\u0E49\u0E32", placement: "left", width: 360, onClose: () => setHistoryOpen(false), open: historyOpen, destroyOnClose: false, extra: (0, jsx_runtime_1.jsx)(antd_1.Tooltip, { title: "\u0E40\u0E23\u0E34\u0E48\u0E21\u0E1A\u0E17\u0E2A\u0E19\u0E17\u0E19\u0E32\u0E43\u0E2B\u0E21\u0E48", children: (0, jsx_runtime_1.jsx)("button", { type: "button", "aria-label": "\u0E40\u0E23\u0E34\u0E48\u0E21\u0E1A\u0E17\u0E2A\u0E19\u0E17\u0E19\u0E32\u0E43\u0E2B\u0E21\u0E48\u0E08\u0E32\u0E01\u0E41\u0E1C\u0E07\u0E1B\u0E23\u0E30\u0E27\u0E31\u0E15\u0E34", onClick: handleNewConversation, className: "flex h-10 w-10 items-center justify-center rounded-lg text-black/70 transition hover:bg-black/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaryFS-500 dark:text-white/80 dark:hover:bg-white/10", children: (0, jsx_runtime_1.jsx)(LuMessageSquarePlus, { size: 20, "aria-hidden": true }) }) }), styles: {
+                    body: { paddingTop: 12, paddingBottom: 16 },
+                }, classNames: {
+                    body: 'bg-zinc-50 dark:bg-zinc-950',
+                }, children: (0, jsx_runtime_1.jsxs)("div", { className: "flex flex-col gap-4", children: [(0, jsx_runtime_1.jsx)(antd_1.Input, { allowClear: true, value: historySearch, onChange: e => setHistorySearch(e.target.value), placeholder: "\u0E04\u0E49\u0E19\u0E2B\u0E32\u0E08\u0E32\u0E01\u0E2B\u0E31\u0E27\u0E02\u0E49\u0E2D\u0E2B\u0E23\u0E37\u0E2D\u0E23\u0E2B\u0E31\u0E2A\u2026", "aria-label": "\u0E04\u0E49\u0E19\u0E2B\u0E32\u0E1A\u0E17\u0E2A\u0E19\u0E17\u0E19\u0E32", prefix: (0, jsx_runtime_1.jsx)(LuSearch, { className: "text-black/40 dark:text-white/45", size: 16, "aria-hidden": true }), className: "rounded-xl border-black/10 bg-white dark:border-white/10 dark:bg-zinc-900" }), historyLoading ? ((0, jsx_runtime_1.jsx)("p", { className: "text-center text-sm text-black/60 dark:text-white/55", children: "\u0E01\u0E33\u0E25\u0E31\u0E07\u0E42\u0E2B\u0E25\u0E14\u0E1B\u0E23\u0E30\u0E27\u0E31\u0E15\u0E34\u2026" })) : historyItems.length === 0 ? ((0, jsx_runtime_1.jsxs)("div", { className: "rounded-xl border border-dashed border-black/15 bg-white px-4 py-8 text-center dark:border-white/15 dark:bg-zinc-900/80", children: [(0, jsx_runtime_1.jsx)(LuMessageSquare, { className: "mx-auto mb-3 text-black/25 dark:text-white/30", size: 36, "aria-hidden": true }), (0, jsx_runtime_1.jsx)("p", { className: "text-sm font-medium text-black/75 dark:text-white/75", children: "\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E21\u0E35\u0E1A\u0E17\u0E2A\u0E19\u0E17\u0E19\u0E32\u0E17\u0E35\u0E48\u0E1A\u0E31\u0E19\u0E17\u0E36\u0E01" }), (0, jsx_runtime_1.jsx)("p", { className: "mt-1 text-xs text-black/50 dark:text-white/50", children: "\u0E2A\u0E48\u0E07\u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E43\u0E2B\u0E49\u0E2B\u0E31\u0E27\u0E02\u0E49\u0E2D\u0E1B\u0E23\u0E32\u0E01\u0E0F\u0E17\u0E35\u0E48\u0E19\u0E35\u0E48" })] })) : filteredHistoryItems.length === 0 ? ((0, jsx_runtime_1.jsxs)("p", { className: "text-center text-sm text-black/60 dark:text-white/55", children: ["\u0E44\u0E21\u0E48\u0E1E\u0E1A\u0E1A\u0E17\u0E2A\u0E19\u0E17\u0E19\u0E32\u0E17\u0E35\u0E48\u0E15\u0E23\u0E07\u0E01\u0E31\u0E1A \u201C", historySearch.trim(), "\u201D"] })) : ((0, jsx_runtime_1.jsx)("div", { className: "flex flex-col gap-5", children: HISTORY_BUCKET_ORDER.map(bucket => {
+                                const items = groupedHistory.get(bucket) ?? [];
+                                if (!items.length)
+                                    return null;
+                                return ((0, jsx_runtime_1.jsxs)("section", { "aria-labelledby": `history-bucket-${bucket}`, children: [(0, jsx_runtime_1.jsx)("h3", { id: `history-bucket-${bucket}`, className: "mb-2 px-0.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-black/45 dark:text-white/45", children: HISTORY_BUCKET_LABELS[bucket] }), (0, jsx_runtime_1.jsx)("ul", { className: "m-0 list-none space-y-2 p-0", role: "list", children: items.map(entry => {
+                                                const active = entry.id === conversationId;
+                                                const dateLabel = new Date(entry.updatedAt).toLocaleString(undefined, {
+                                                    dateStyle: 'medium',
+                                                    timeStyle: 'short',
+                                                });
+                                                return ((0, jsx_runtime_1.jsx)("li", { children: (0, jsx_runtime_1.jsxs)("div", { className: `flex min-h-[52px] overflow-hidden rounded-xl border transition-colors ${active
+                                                            ? 'border-primaryFS-500/50 bg-primaryFS-500/15 shadow-sm dark:bg-primaryFS-500/20'
+                                                            : 'border-black/8 bg-white hover:border-black/15 hover:bg-zinc-50/90 dark:border-white/10 dark:bg-zinc-900 dark:hover:border-white/18 dark:hover:bg-zinc-800/90'}`, children: [(0, jsx_runtime_1.jsx)(antd_1.Tooltip, { title: entry.title, placement: "right", children: (0, jsx_runtime_1.jsxs)("button", { type: "button", "aria-current": active ? 'true' : undefined, "aria-label": `เปิดบทสนทนา: ${entry.title}`, onClick: () => handleSelectHistory(entry.id), className: "flex min-h-[52px] min-w-0 flex-1 items-start gap-3 px-3 py-3 text-left touch-manipulation", children: [(0, jsx_runtime_1.jsx)("span", { className: `mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${active
+                                                                                ? 'bg-primaryFS-500/25 text-primaryFS-600 dark:text-primaryFS-300'
+                                                                                : 'bg-black/[0.06] text-black/50 dark:bg-white/10 dark:text-white/55'}`, children: (0, jsx_runtime_1.jsx)(LuMessageSquare, { size: 18, "aria-hidden": true }) }), (0, jsx_runtime_1.jsxs)("span", { className: "min-w-0 flex-1", children: [(0, jsx_runtime_1.jsx)("span", { className: "line-clamp-2 text-sm font-medium leading-snug text-black/90 dark:text-white/90", children: entry.title }), (0, jsx_runtime_1.jsx)("time", { dateTime: new Date(entry.updatedAt).toISOString(), className: "mt-1 block text-xs tabular-nums text-black/50 dark:text-white/50", children: dateLabel })] })] }) }), (0, jsx_runtime_1.jsx)(antd_1.Dropdown, { trigger: ['click'], placement: "bottomRight", menu: {
+                                                                    items: [
+                                                                        {
+                                                                            key: 'remove',
+                                                                            danger: true,
+                                                                            icon: (0, jsx_runtime_1.jsx)(LuTrash2, { size: 16, "aria-hidden": true }),
+                                                                            label: 'ลบจากรายการ',
+                                                                            onClick: () => handleRemoveHistoryEntry(entry.id),
+                                                                        },
+                                                                    ],
+                                                                }, children: (0, jsx_runtime_1.jsx)("button", { type: "button", "aria-label": `ตัวเลือกสำหรับ ${entry.title}`, onClick: e => e.stopPropagation(), className: "flex h-[52px] w-11 shrink-0 items-center justify-center border-l border-black/8 text-black/45 transition hover:bg-black/[0.04] hover:text-black/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primaryFS-500 dark:border-white/10 dark:text-white/50 dark:hover:bg-white/5 dark:hover:text-white/80", children: (0, jsx_runtime_1.jsx)(LuMoreVertical, { size: 18, "aria-hidden": true }) }) })] }) }, entry.id));
+                                            }) })] }, bucket));
+                            }) }))] }) }), (0, jsx_runtime_1.jsx)(antd_1.Drawer, { title: "\u0E41\u0E01\u0E49\u0E44\u0E02\u0E42\u0E1B\u0E23\u0E44\u0E1F\u0E25\u0E4C\u0E1C\u0E39\u0E49\u0E40\u0E23\u0E35\u0E22\u0E19", placement: "right", width: 360, onClose: () => setProfileMenuOpen(false), open: profileMenuOpen, destroyOnClose: false, styles: {
+                    body: { paddingTop: 12, paddingBottom: 16 },
+                }, classNames: {
+                    body: 'bg-zinc-50 dark:bg-zinc-950',
+                }, children: effectiveProfile && hasSavedProfile ? ((0, jsx_runtime_1.jsx)(AssistantProfileCard_1.AssistantProfileCard, { profile: effectiveProfile, summary: profileSummaryTh, onEdit: handleProfileEditFromMenu, className: "mb-0" })) : skillpassOn ? ((0, jsx_runtime_1.jsxs)("div", { className: "rounded-xl border border-dashed border-black/15 bg-white px-4 py-8 text-center dark:border-white/15 dark:bg-zinc-900/80", children: [(0, jsx_runtime_1.jsx)("p", { className: "text-sm font-medium text-black/75 dark:text-white/75", children: "\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E21\u0E35\u0E42\u0E1B\u0E23\u0E44\u0E1F\u0E25\u0E4C\u0E1C\u0E39\u0E49\u0E40\u0E23\u0E35\u0E22\u0E19" }), (0, jsx_runtime_1.jsx)("p", { className: "mt-2 text-xs text-black/55 dark:text-white/55", children: "\u0E01\u0E23\u0E2D\u0E01\u0E41\u0E1A\u0E1A\u0E2A\u0E2D\u0E1A\u0E16\u0E32\u0E21 Futureskill \u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E43\u0E2B\u0E49\u0E1C\u0E39\u0E49\u0E0A\u0E48\u0E27\u0E22\u0E1B\u0E23\u0E31\u0E1A\u0E04\u0E33\u0E15\u0E2D\u0E1A\u0E43\u0E2B\u0E49\u0E40\u0E2B\u0E21\u0E32\u0E30\u0E01\u0E31\u0E1A\u0E04\u0E38\u0E13" })] })) : ((0, jsx_runtime_1.jsxs)("div", { className: "flex flex-col gap-3", children: [(0, jsx_runtime_1.jsx)("p", { className: "m-0 text-sm text-black/70 dark:text-white/70", children: "\u0E15\u0E31\u0E49\u0E07\u0E04\u0E48\u0E32\u0E42\u0E1B\u0E23\u0E44\u0E1F\u0E25\u0E4C\u0E1C\u0E39\u0E49\u0E40\u0E23\u0E35\u0E22\u0E19\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E43\u0E2B\u0E49\u0E1C\u0E39\u0E49\u0E0A\u0E48\u0E27\u0E22\u0E41\u0E19\u0E30\u0E19\u0E33\u0E40\u0E19\u0E37\u0E49\u0E2D\u0E2B\u0E32\u0E44\u0E14\u0E49\u0E15\u0E23\u0E07\u0E01\u0E31\u0E1A\u0E40\u0E1B\u0E49\u0E32\u0E2B\u0E21\u0E32\u0E22\u0E02\u0E2D\u0E07\u0E04\u0E38\u0E13" }), (0, jsx_runtime_1.jsx)("button", { type: "button", onClick: handleProfileEditFromMenu, className: "inline-flex min-h-10 items-center justify-center rounded-lg bg-primaryFS-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-primaryFS-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaryFS-400", children: "\u0E40\u0E23\u0E34\u0E48\u0E21\u0E15\u0E31\u0E49\u0E07\u0E04\u0E48\u0E32\u0E42\u0E1B\u0E23\u0E44\u0E1F\u0E25\u0E4C" })] })) })] }));
 };
 exports.AssistantPanel = AssistantPanel;
