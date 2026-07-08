@@ -3,7 +3,7 @@
 [![npm](https://img.shields.io/npm/v/@likemex/fs-react-lib.svg)](https://www.npmjs.com/package/@likemex/fs-react-lib)
 [![license](https://img.shields.io/npm/l/@likemex/fs-react-lib.svg)](LICENSE)
 
-Shared in-app AI assistant ("FS AI") chat widget for Next.js apps. REST + Server-Sent Events streaming. Drop-in panel + floating button + Next.js API proxy + Tailwind tokens.
+Shared in-app AI assistant ("FS AI") chat widget for Next.js apps. REST + Server-Sent Events streaming. Drop-in panel + floating button + Next.js API proxy + **FutureSkill design tokens** (assistant palette + full Tailwind preset).
 
 Ships:
 
@@ -14,6 +14,7 @@ Ships:
 - `createFsAiProxyHandler()` — Next.js API route factory that proxies `/api/fs-ai/**` to the upstream origin and injects the server-only `X-API-Key`.
 - Hooks: `useAssistantConversation`, `useAssistantPhase`, `useAssistantStream`.
 - Helpers: `buildLearningMetadata`, `canUseLearningAssistant`, `isFsAiApiConfigured`, conversation history store, user-profile store, SSE decoder, markdown sanitizer.
+- **Design tokens**: `/tailwind-tokens` (assistant), `/tailwind-preset` + `/colors` (full FS design system) — see [Design tokens](#design-tokens).
 
 ## Install
 
@@ -93,7 +94,7 @@ export default createFsAiProxyHandler();
 
 ### 3. Tailwind tokens + content path
 
-`tailwind.config.js`:
+`tailwind.config.js` (assistant widget only — see [Design tokens](#design-tokens) for the full FutureSkill palette):
 
 ```js
 const assistantTokens = require('@likemex/fs-react-lib/tailwind-tokens');
@@ -246,13 +247,123 @@ import {
 
 Full type definitions in `dist/index.d.ts`.
 
-## Tailwind tokens subpath
+## Design tokens
+
+This package ships **two token layers**. Pick the one that matches your app — you do not need to open `colors.js` in the repo to use them; everything is published as npm subpath exports.
+
+### How to discover what's available
+
+| Where to look | What you get |
+|---------------|--------------|
+| **This README** | Usage patterns, class names, and which subpath to import |
+| **`package.json` → `exports`** | Official entry points (IDE autocomplete on `@likemex/fs-react-lib/…`) |
+| **Installed package** | After `pnpm add`, browse `node_modules/@likemex/fs-react-lib/` — shipped files: `tailwind-tokens.js`, `tailwind-preset.js`, `colors.js` |
+| **[npm package page](https://www.npmjs.com/package/@likemex/fs-react-lib)** | Version, files list, and this README |
+
+```jsonc
+// package.json exports (authoritative list)
+{
+  "@likemex/fs-react-lib/tailwind-tokens": "…",  // assistant widget palette
+  "@likemex/fs-react-lib/tailwind-preset": "…",  // full FS design-system preset
+  "@likemex/fs-react-lib/colors": "…"            // raw token source (JS/TS)
+}
+```
+
+### Layer 1 — Assistant widget tokens (`/tailwind-tokens`)
+
+Minimal palette used by `<AssistantPanel>` and related components. Class names in the compiled lib look like `bg-primaryFS-500`, `text-blackFS-100`, `from-pinkFS-500`.
 
 ```js
-// CommonJS (tailwind.config.js)
-const tokens = require('@likemex/fs-react-lib/tailwind-tokens');
-// → { primaryFS, pinkFS, blackFS, successFS }
+const { primaryFS, pinkFS, blackFS, successFS } =
+    require('@likemex/fs-react-lib/tailwind-tokens');
 ```
+
+| Key | Scale | Example class |
+|-----|-------|---------------|
+| `primaryFS` | 50–900 | `bg-primaryFS-500` |
+| `pinkFS` | 100–900 | `text-pinkFS-400` |
+| `blackFS` | 100–900 | `border-blackFS-500` |
+| `successFS` | 100–900 | `text-successFS-500` |
+
+Use this layer when you only embed the AI assistant and want matching colors without pulling the full design system.
+
+### Layer 2 — Full FutureSkill design system (`/tailwind-preset` + `/colors`)
+
+Source of truth for FutureSkill product UIs: raw scales, semantic aliases, light/dark `colorsSemantic`, and per-app overrides.
+
+**Recommended — Tailwind preset** (generates all utility classes for you):
+
+```js
+// tailwind.config.js
+const createPreset = require('@likemex/fs-react-lib/tailwind-preset');
+
+module.exports = {
+    presets: [
+        createPreset('fsBizPanel'),   // or 'fsContentPanel' | 'fsAssessmentPanel'
+        // createPreset()              // core-only, no panel-specific colors
+    ],
+    content: ['./src/**/*.{js,ts,jsx,tsx}'],
+};
+```
+
+Example classes after preset: `bg-purple-500`, `text-colorsSemantic-light-text-brand`, `bg-mainBrand-light-1000`, `border-assessment-openEnded-200`.
+
+**Programmatic access** (charts, inline styles, Ant Design `theme.token`, etc.):
+
+```js
+const tokens = require('@likemex/fs-react-lib/colors');
+
+tokens.core.raw.purple[500];           // '#842CDD'
+tokens.core.semantic.primary.DEFAULT;  // '#842CDD'
+tokens.apps.fsBizPanel.rawColors;      // panel-specific extras
+```
+
+#### `colors.js` structure
+
+```
+colors
+├── core
+│   ├── raw            → neutral, purple, green, red, primary (CSS vars), accent, …
+│   ├── semantic       → primary, background, foreground
+│   └── themeExtensions → mainBrand, secondaryBrand, basicBase, assessment, ojt, neutralSolid()
+└── apps
+    ├── fsBizPanel
+    ├── fsContentPanel
+    └── fsAssessmentPanel
+```
+
+#### CSS custom properties required by the preset
+
+Some preset values use `color-mix()` with CSS variables. Define these in your global CSS (e.g. `:root` or a theme provider) before relying on `mainBrand`, `secondaryBrand`, `basicBase`, `assessment`, or `ojt` utilities:
+
+```css
+:root {
+  --color-primary-500: #842CDD;
+  --color-primary-300: #AB74E9;
+  --color-deepPink-500: #FF1A8F;
+  --color-deepPink-300: #ff6bae;
+  --color-neutral-50: #ffffff;
+  --color-blueViolet-500: #472CDD;
+  --color-burntOrange-500: #DB7725;
+  --color-forestGreen-50: #E8F5E9;
+  --color-forestGreen-500: #3B6D11;
+  --color-vividGreen-50: #E5F6EA;
+  --color-vividGreen-500: #00B35A;
+  --color-info-50: #F4FBFF;
+  --color-info-500: #3C9FFC;
+}
+```
+
+Raw hex scales (`purple`, `green`, `neutral`, …) work without these variables.
+
+### Which layer should I use?
+
+| Your app | Import |
+|----------|--------|
+| Only embeds the AI assistant widget | `/tailwind-tokens` |
+| FutureSkill panel / product UI (biz, content, assessment) | `/tailwind-preset` with the matching app name |
+| Need token values in JS (charts, Ant Design, canvas) | `/colors` |
+| Unsure what class names exist | Inspect `node_modules/@likemex/fs-react-lib/dist/**/*.js` or run Tailwind with `DEBUG=tailwindcss` |
 
 ## Prerequisites
 
@@ -275,5 +386,3 @@ Publish (maintainers): tag a release, GitHub Action runs build + `npm publish --
 ## License
 
 [MIT](LICENSE) © LikeMeX
-
-dirty change
