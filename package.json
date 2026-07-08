@@ -19,12 +19,17 @@
             "types": "./dist/index.d.ts",
             "default": "./dist/index.js"
         },
-        "./tailwind-tokens": "./tailwind-tokens.js"
+        "./tailwind-tokens": "./tailwind-tokens.js",
+        "./tailwind-preset": "./tailwind-preset.js",
+        "./colors": "./colors.js"
     },
     "files": [
         "dist",
         "tailwind-tokens.js",
         "README.md",
+        "colors.js",
+        "tailwind-preset.js",
+        "index.js",
         "LICENSE"
     ],
     "scripts": {

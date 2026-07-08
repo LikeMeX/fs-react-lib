@@ -1,6 +1,6 @@
 /**
  * Usage:
- *   const createPreset = require('@petpusin/design-tokens/tailwind-preset');
+ *   const createPreset = require('@likemex/fs-react-lib/tailwind-preset');
  *   module.exports = { presets: [createPreset('fsBizPanel')], content: [...] };
  *   // or createPreset() for core-only (no panel-specific tokens)
  *
