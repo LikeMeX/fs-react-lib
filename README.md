@@ -350,7 +350,7 @@ const createPreset = require('@likemex/fs-react-lib/tailwind-preset');
 
 module.exports = {
     presets: [
-        createPreset('fsBizPanel'),   // or 'fsContentPanel' | 'fsAssessmentPanel'
+        createPreset('fsBizPanel'),   // or 'fsContentPanel' | 'fsAssessmentPanel' | 'fsLearnApp'
         // createPreset()              // core-only, no panel-specific colors
     ],
     content: ['./src/**/*.{js,ts,jsx,tsx}'],
@@ -379,7 +379,8 @@ colors
 └── apps
     ├── fsBizPanel
     ├── fsContentPanel
-    └── fsAssessmentPanel
+    ├── fsAssessmentPanel
+    └── fsLearnApp
 ```
 
 Full dump of every named key (`gray.*`, `dark.*`, …) lives in `@likemex/fs-react-lib/colors` — the hex blocks below cover the scales developers use day-to-day.
@@ -543,6 +544,10 @@ Full dump of every named key (`gray.*`, `dark.*`, …) lives in `@likemex/fs-rea
 /* fsAssessmentPanel */
 --lightBG-100: #F9F9FE;
 --setting-100: #FCF9FF;
+
+/* fsLearnApp — CourseCard badge colors (distinct from panel classroom/embledlink) */
+--classroom: #F4AE34;
+--embledlink: #70BBBF;
 ```
 
 #### CSS custom properties required by the preset
