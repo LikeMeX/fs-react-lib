@@ -218,13 +218,19 @@ module.exports = {
         deepIndigo: '#2B0BA9',  // was other.4
         lavender: '#977DFF',    // was other.6
       },
+    },
     fsAssessmentPanel: {
       rawColors: {
         lightBG: { 100: '#F9F9FE' },
         setting: { 100: '#FCF9FF' },
       },
     },
-    // add its panel-specific colors here if any emerge
+    // CourseCard badge colors from fs-learn (distinct from panel classroom/embledlink)
+    fsLearnApp: {
+      rawColors: {
+        classroom: '#F4AE34',
+        embledlink: '#70BBBF',
+      },
+    },
   },
-}
-}
+};
