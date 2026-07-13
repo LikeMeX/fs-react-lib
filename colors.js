@@ -23,7 +23,6 @@ module.exports = {
         400: '#b0b7c6', 500: '#9197a6', 600: '#686f7c', 700: '#555b68',
         800: '#363c49', 900: '#161c27',
       },
-
       primary: {
         50: 'var(--color-primary-50)', 100: 'var(--color-primary-100)', 200: 'var(--color-primary-200)',
         300: 'var(--color-primary-300)', 400: 'var(--color-primary-400)', 500: 'var(--color-primary-500)',
@@ -32,8 +31,6 @@ module.exports = {
         main: 'var(--color-primary-500)', text: 'var(--color-primary-500)',
         unlock: '#8337FF', logo: '#49236B', overview: '#5B13F4', overview2: '#7D18FE',
       },
-
-     
       purple: {
         50: '#F1E7FB', 100: '#DBC5F5', 200: '#C39EEF', 300: '#AB74E9',
         400: '#9852E3', 500: '#842CDD', 600: '#7A27D6', 700: '#6C1CCD',
@@ -41,9 +38,9 @@ module.exports = {
       },
 
       purpleDeep: {
-        50: '#f8f0ff', 100: '#f7f0ff', 200: '#e9d6ff', 300: '#cfadff',
-        400: '#b485ff', 500: '#975DFF', 600: '#7343d9', 700: '#542eb3',
-        800: '#391d8c', 900: '#261466',
+        50: '#F0E6F2', 100: '#DAC1DF', 200: '#C398CB', 300: '#AB72B5',
+        400: '#9957A5', 500: '#884196', 600: '#7C3C8F', 700: '#6C3585',
+        800: '#5D307B', 900: '#442767',
       },
 
       pink: {
@@ -59,14 +56,14 @@ module.exports = {
       },
 
       yellow: {
-        50: '#fffce6', 100: '#fff2a8', 200: '#f5d97c', 300: '#f1cc46',
+        50: '#FDF6DF', 100: '#F9E8AF', 200: '#f5d97c', 300: '#f1cc46',
         400: '#efc018', 500: '#edb500', 600: '#eda800', 700: '#ed9600',
         800: '#ed8500', 900: '#ed6500', status: '#FFE2AA',
       },
 
       red: {
         50: '#ffebef', 100: '#ffcdd4', 200: '#f99a9b', 300: '#ff4d50',
-        400: '#ff3733', 500: '#ff3733', 600: '#f72d34', 700: '#e41f2d',
+        400: '#E9423E', 500: '#ff3733', 600: '#f72d34', 700: '#e41f2d',
         800: '#d71426', 900: '#c80019',
       },
       deepPink: {
@@ -135,7 +132,6 @@ module.exports = {
         400: '#7E7E82', 500: '#2E2E30', 600: '#212129', 700: '#171722',
         800: '#0E0E1B', 900: '#080817',
       },
-
       dark: {
         input: '#232A37',
         input2: '#232A37',
@@ -145,7 +141,6 @@ module.exports = {
         100: '#8A8AAB', 200: '#6D6D8A', 300: '#43435C', 400: '#35354B',
         500: '#2C2C3D', 600: '#202034', 700: '#16162B', 800: '#0E0E23', 900: '#2D3E76',
       },
-
       accent: {
         teal: '#11C7BC',      // was other.1 in both panels (index agreed too)
         paleBlue: '#B5D2FF',  // was other.3 in fs-biz-panel, other.4 in fs-content-panel (index drifted)
@@ -193,7 +188,6 @@ module.exports = {
         fsSubCategory: '#FC3287',
         lbody: '#E8EAEC',
         lgreen: '#97C711',
-        limeGreen: '#B1D941',    // was other.5
         paleMint: '#D1FFE9',     // was other.7
         slateGray: '#4C525F',    // was other.8
         nearBlack: '#181717',    // was other.9
@@ -232,5 +226,6 @@ module.exports = {
         embledlink: '#70BBBF',
       },
     },
+     // add its panel-specific colors here if any emerge
   },
 };
