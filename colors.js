@@ -23,6 +23,7 @@ module.exports = {
         400: '#b0b7c6', 500: '#9197a6', 600: '#686f7c', 700: '#555b68',
         800: '#363c49', 900: '#161c27',
       },
+
       primary: {
         50: 'var(--color-primary-50)', 100: 'var(--color-primary-100)', 200: 'var(--color-primary-200)',
         300: 'var(--color-primary-300)', 400: 'var(--color-primary-400)', 500: 'var(--color-primary-500)',
@@ -32,16 +33,13 @@ module.exports = {
         unlock: '#8337FF', logo: '#49236B', overview: '#5B13F4', overview2: '#7D18FE',
       },
 
+     
       purple: {
         50: '#F1E7FB', 100: '#DBC5F5', 200: '#C39EEF', 300: '#AB74E9',
         400: '#9852E3', 500: '#842CDD', 600: '#7A27D6', 700: '#6C1CCD',
         800: '#5E13C7', 900: '#4900B9',
       },
 
-      // ⚠️ RE-OPENED (was "CONFIRMED by team decision: File A's scale chosen over
-      // B/C's muted family") — fs-content-panel's real current file uses the OTHER
-      // (B's typo'd, muted #884196) family instead. Holding at the original decision's
-      // value below pending explicit UX/dev confirmation — do not silently pick either.
       purpleDeep: {
         50: '#f8f0ff', 100: '#f7f0ff', 200: '#e9d6ff', 300: '#cfadff',
         400: '#b485ff', 500: '#975DFF', 600: '#7343d9', 700: '#542eb3',
@@ -71,7 +69,6 @@ module.exports = {
         400: '#ff3733', 500: '#ff3733', 600: '#f72d34', 700: '#e41f2d',
         800: '#d71426', 900: '#c80019',
       },
-
       deepPink: {
         50: '#ffe6ee', 100: '#ffbdd6', 200: '#ff94c1', 300: '#ff6bae',
         400: '#ff429e', 500: '#FF1A8F', 600: '#D90b7c', 700: '#b30068',
@@ -158,7 +155,7 @@ module.exports = {
         forestGreen: { 50: '#E8F5E9', 500: '#3B6D11' },  // OJT: Apprenticeship tag
         vividGreen: { 50: '#E5F6EA', 500: '#00B35A' },   // OJT: Orientation tag
       },
-
+      baseLight: { 500: '#191919' },
       success: {
         DEFAULT: '#0DC180',
         50: '#f2fbf7', 100: '#CCFBED', 200: '#9BF8D1', 300: '#68ECBC', 400: '#41D9A2',
@@ -175,95 +172,19 @@ module.exports = {
         50: '#fef5f5', 100: '#FFD8D8', 200: '#FFB2B2', 300: '#FF8B8B', 400: '#FF6F6F',
         500: '#FF3F3F', 600: '#DB2E2E', 700: '#B71F1F', 800: '#931414', 900: '#7A0C0C',
       },
-
       info: {
         50: '#F4FBFF', 500: '#3C9FFC', 600: '#3388EC', 700: '#0F8EFF',
       },
     },
 
+    // ── Semantic layer — only for concepts that AREN'T already a full raw scale.
     semantic: {
       primary: { DEFAULT: '#842CDD', hover: '#6C1CCD', border: '#7A27D6', selectedBg: '#DBC5F5', foreground: '#ffffff' },
       background: '#ffffff',
       foreground: '#0a0f18',
     },
-
-    themeExtensions: {
-      mainBrand: {
-        light: {
-          50: 'color-mix(in srgb, var(--color-primary-500) 5%, transparent)',
-          200: 'color-mix(in srgb, var(--color-primary-500) 20%, transparent)',
-          800: 'color-mix(in srgb, var(--color-primary-500) 80%, transparent)',
-          1000: 'var(--color-primary-500)',
-        },
-        dark: {
-          50: 'color-mix(in srgb, var(--color-primary-300) 5%, transparent)',
-          200: 'color-mix(in srgb, var(--color-primary-300) 20%, transparent)',
-          800: 'color-mix(in srgb, var(--color-primary-300) 80%, transparent)',
-          1000: 'var(--color-primary-300)',
-        },
-      },
-      secondaryBrand: {
-        dark: {
-          50: 'color-mix(in srgb, var(--color-deepPink-300) 5%, transparent)',
-          200: 'color-mix(in srgb, var(--color-deepPink-300) 20%, transparent)',
-          800: 'color-mix(in srgb, var(--color-deepPink-300) 80%, transparent)',
-          1000: 'var(--color-deepPink-300)',
-        },
-        light: {
-          50: 'color-mix(in srgb, var(--color-deepPink-500) 5%, transparent)',
-          200: 'color-mix(in srgb, var(--color-deepPink-500) 20%, transparent)',
-          800: 'color-mix(in srgb, var(--color-deepPink-500) 80%, transparent)',
-          1000: 'var(--color-deepPink-500)',
-        },
-      },
-      neutralSolid: (raw) => ({
-        50: raw.neutral[50],
-        100: raw.neutral[100],
-        150: raw.neutral[200],
-        500: raw.neutralAnalogous[500],
-        700: raw.neutralAnalogous[700],
-        800: raw.neutralAnalogous[800],
-        850: '#262c38', // hardcoded in source — doesn't map to any existing scale
-        900: raw.neutralAnalogous[900],
-      }),
-      basicBase: {
-        dark: {
-          25: 'color-mix(in srgb, var(--color-neutral-50) 3%, transparent)',
-          50: 'color-mix(in srgb, var(--color-neutral-50) 6%, transparent)',
-          100: 'color-mix(in srgb, var(--color-neutral-50) 12%, transparent)',
-          500: 'color-mix(in srgb, var(--color-neutral-50) 60%, transparent)',
-          700: 'color-mix(in srgb, var(--color-neutral-50) 78%, transparent)',
-          1000: 'var(--color-neutral-50)',
-        },
-        light: {
-          25: '#19191905', 50: '#1919190a', 100: '#1919191a',
-          500: '#19191973', 700: '#191919a6', 1000: '#191919e6',
-        },
-      },
-
-      assessment: {
-        openEnded: {
-          50: 'color-mix(in srgb, var(--color-blueViolet-500) 5%, transparent)',
-          200: 'color-mix(in srgb, var(--color-blueViolet-500) 20%, transparent)',
-          1000: 'color-mix(in srgb, var(--color-blueViolet-500) 100%, transparent)',
-        },
-        choice: {
-          50: 'color-mix(in srgb, var(--color-burntOrange-500) 5%, transparent)',
-          200: 'color-mix(in srgb, var(--color-burntOrange-500) 20%, transparent)',
-          1000: 'color-mix(in srgb, var(--color-burntOrange-500) 100%, transparent)',
-        },
-      },
-      ojt: {
-        apprenticeship: { 50: 'var(--color-forestGreen-50)', 1000: 'var(--color-forestGreen-500)' },
-        orientation: { 50: 'var(--color-vividGreen-50)', 1000: 'var(--color-vividGreen-500)' },
-        simulatedTraining: { 50: 'var(--color-blueViolet-50)', 1000: 'var(--color-blueViolet-500)' },
-        crossTraining: { 50: 'var(--color-info-50)', 1000: 'var(--color-info-500)' },
-      },
-    },
   },
-
   apps: {
-    // REVISED — verified against fs-content-panel's real current tailwind config.
     fsContentPanel: {
       rawColors: {
         classroom: '#C4A9FF',
@@ -297,12 +218,13 @@ module.exports = {
         deepIndigo: '#2B0BA9',  // was other.4
         lavender: '#977DFF',    // was other.6
       },
-    },
     fsAssessmentPanel: {
       rawColors: {
         lightBG: { 100: '#F9F9FE' },
         setting: { 100: '#FCF9FF' },
       },
-    },                      // add its panel-specific colors here if any emerge
+    },
+    // add its panel-specific colors here if any emerge
   },
-};
+}
+}
