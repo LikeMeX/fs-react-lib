@@ -342,6 +342,8 @@ Use this layer when you only embed the AI assistant and want matching colors wit
 
 Source of truth for FutureSkill product UIs: raw hex scales, semantic aliases, `colorsSemantic` utilities, and per-app overrides.
 
+**Step-by-step setup:** [docs/tailwind-preset.md](docs/tailwind-preset.md)
+
 **Recommended — Tailwind preset** (generates all utility classes for you):
 
 ```js
@@ -400,16 +402,16 @@ Full dump of every named key (`gray.*`, `dark.*`, …) lives in `@likemex/fs-rea
 --purple-800: #5E13C7;
 --purple-900: #4900B9;
 
---purpleDeep-50: #f8f0ff;
---purpleDeep-100: #f7f0ff;
---purpleDeep-200: #e9d6ff;
---purpleDeep-300: #cfadff;
---purpleDeep-400: #b485ff;
---purpleDeep-500: #975DFF;
---purpleDeep-600: #7343d9;
---purpleDeep-700: #542eb3;
---purpleDeep-800: #391d8c;
---purpleDeep-900: #261466;
+--purpleDeep-50: #F0E6F2;
+--purpleDeep-100: #DAC1DF;
+--purpleDeep-200: #C398CB;
+--purpleDeep-300: #AB72B5;
+--purpleDeep-400: #9957A5;
+--purpleDeep-500: #884196;
+--purpleDeep-600: #7C3C8F;
+--purpleDeep-700: #6C3585;
+--purpleDeep-800: #5D307B;
+--purpleDeep-900: #442767;
 
 --deepPink-50: #ffe6ee;
 --deepPink-100: #ffbdd6;
@@ -425,10 +427,14 @@ Full dump of every named key (`gray.*`, `dark.*`, …) lives in `@likemex/fs-rea
 /* Status */
 --green-500: #00b35A;
 --green-700: #009244;
+--red-400: #E9423E;
 --red-500: #ff3733;
 --red-700: #e41f2d;
+--yellow-50: #FDF6DF;
+--yellow-100: #F9E8AF;
 --yellow-500: #edb500;
 --yellow-700: #ed9600;
+--yellow-status: #FFE2AA;
 
 --success-DEFAULT: #0DC180;
 --success-50: #f2fbf7;
@@ -518,7 +524,6 @@ Full dump of every named key (`gray.*`, `dark.*`, …) lives in `@likemex/fs-rea
 --fsSubCategory: #FC3287;
 --lbody: #E8EAEC;
 --lgreen: #97C711;
---limeGreen: #B1D941;
 --paleMint: #D1FFE9;
 --slateGray: #4C525F;
 --nearBlack: #181717;
