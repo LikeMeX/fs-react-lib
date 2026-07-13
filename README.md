@@ -249,13 +249,13 @@ Full type definitions in `dist/index.d.ts`.
 
 ## Design tokens
 
-This package ships **two token layers**. Pick the one that matches your app — you do not need to open `colors.js` in the repo to use them; everything is published as npm subpath exports.
+This package ships **two token layers**. Pick the one that matches your app — you do not need to open `colors.js` in the repo to use them; everything is published as npm subpath exports. Hex values below are the source of truth for what each token looks like.
 
 ### How to discover what's available
 
 | Where to look | What you get |
 |---------------|--------------|
-| **This README** | Usage patterns, class names, and which subpath to import |
+| **This README** | Usage patterns, **hex color reference**, class names, and which subpath to import |
 | **`package.json` → `exports`** | Official entry points (IDE autocomplete on `@likemex/fs-react-lib/…`) |
 | **Installed package** | After `pnpm add`, browse `node_modules/@likemex/fs-react-lib/` — shipped files: `tailwind-tokens.js`, `tailwind-preset.js`, `colors.js` |
 | **[npm package page](https://www.npmjs.com/package/@likemex/fs-react-lib)** | Version, files list, and this README |
@@ -285,11 +285,62 @@ const { primaryFS, pinkFS, blackFS, successFS } =
 | `blackFS` | 100–900 | `border-blackFS-500` |
 | `successFS` | 100–900 | `text-successFS-500` |
 
+#### Color reference (hex)
+
+```css
+/* Assistant widget — @likemex/fs-react-lib/tailwind-tokens */
+
+/* primaryFS */
+--primaryFS-50: #F1E7FB;
+--primaryFS-100: #DBC5F5;
+--primaryFS-200: #C39EEF;
+--primaryFS-300: #AB74E9;
+--primaryFS-400: #9852E3;
+--primaryFS-500: #842CDD;
+--primaryFS-600: #7A27D6;
+--primaryFS-700: #6C1CCD;
+--primaryFS-800: #5E13C7;
+--primaryFS-900: #4900B9;
+
+/* pinkFS */
+--pinkFS-100: #FEE6E2;
+--pinkFS-200: #FDC9C5;
+--pinkFS-300: #FBA8AB;
+--pinkFS-400: #F7919F;
+--pinkFS-500: #F36D8C;
+--pinkFS-600: #D04F7A;
+--pinkFS-700: #AE3669;
+--pinkFS-800: #8C2259;
+--pinkFS-900: #370337;
+
+/* blackFS */
+--blackFS-100: #FFFFFF;
+--blackFS-200: #E6E6EA;
+--blackFS-300: #BCBCC0;
+--blackFS-400: #7E7E82;
+--blackFS-500: #2E2E30;
+--blackFS-600: #212129;
+--blackFS-700: #171722;
+--blackFS-800: #0E0E1B;
+--blackFS-900: #080817;
+
+/* successFS */
+--successFS-100: #CCFBED;
+--successFS-200: #9BF8D1;
+--successFS-300: #68ECBC;
+--successFS-400: #41D9A2;
+--successFS-500: #0DC180;
+--successFS-600: #09A576;
+--successFS-700: #068A5A;
+--successFS-800: #046F48;
+--successFS-900: #025C3C;
+```
+
 Use this layer when you only embed the AI assistant and want matching colors without pulling the full design system.
 
 ### Layer 2 — Full FutureSkill design system (`/tailwind-preset` + `/colors`)
 
-Source of truth for FutureSkill product UIs: raw scales, semantic aliases, light/dark `colorsSemantic`, and per-app overrides.
+Source of truth for FutureSkill product UIs: raw hex scales, semantic aliases, `colorsSemantic` utilities, and per-app overrides.
 
 **Recommended — Tailwind preset** (generates all utility classes for you):
 
@@ -306,7 +357,7 @@ module.exports = {
 };
 ```
 
-Example classes after preset: `bg-purple-500`, `text-colorsSemantic-light-text-brand`, `bg-mainBrand-light-1000`, `border-assessment-openEnded-200`.
+Example classes after preset: `bg-purple-500`, `bg-deepPink-500`, `text-colorsSemantic-text-brand`, `bg-colorsSemantic-fill-brandStrong`.
 
 **Programmatic access** (charts, inline styles, Ant Design `theme.token`, etc.):
 
@@ -323,38 +374,212 @@ tokens.apps.fsBizPanel.rawColors;      // panel-specific extras
 ```
 colors
 ├── core
-│   ├── raw            → neutral, purple, green, red, primary (CSS vars), accent, …
-│   ├── semantic       → primary, background, foreground
-│   └── themeExtensions → mainBrand, secondaryBrand, basicBase, assessment, ojt, neutralSolid()
+│   ├── raw       → neutral, purple, green, red, primary (CSS vars), accent, …
+│   └── semantic  → primary, background, foreground
 └── apps
     ├── fsBizPanel
     ├── fsContentPanel
     └── fsAssessmentPanel
 ```
 
+Full dump of every named key (`gray.*`, `dark.*`, …) lives in `@likemex/fs-react-lib/colors` — the hex blocks below cover the scales developers use day-to-day.
+
+#### Color reference (hex)
+
+```css
+/* Brand — core.raw */
+--purple-50: #F1E7FB;
+--purple-100: #DBC5F5;
+--purple-200: #C39EEF;
+--purple-300: #AB74E9;
+--purple-400: #9852E3;
+--purple-500: #842CDD;
+--purple-600: #7A27D6;
+--purple-700: #6C1CCD;
+--purple-800: #5E13C7;
+--purple-900: #4900B9;
+
+--purpleDeep-50: #f8f0ff;
+--purpleDeep-100: #f7f0ff;
+--purpleDeep-200: #e9d6ff;
+--purpleDeep-300: #cfadff;
+--purpleDeep-400: #b485ff;
+--purpleDeep-500: #975DFF;
+--purpleDeep-600: #7343d9;
+--purpleDeep-700: #542eb3;
+--purpleDeep-800: #391d8c;
+--purpleDeep-900: #261466;
+
+--deepPink-50: #ffe6ee;
+--deepPink-100: #ffbdd6;
+--deepPink-200: #ff94c1;
+--deepPink-300: #ff6bae;
+--deepPink-400: #ff429e;
+--deepPink-500: #FF1A8F;
+--deepPink-600: #D90b7c;
+--deepPink-700: #b30068;
+--deepPink-800: #8C0056;
+--deepPink-900: #660042;
+
+/* Status */
+--green-500: #00b35A;
+--green-700: #009244;
+--red-500: #ff3733;
+--red-700: #e41f2d;
+--yellow-500: #edb500;
+--yellow-700: #ed9600;
+
+--success-DEFAULT: #0DC180;
+--success-50: #f2fbf7;
+--success-100: #CCFBED;
+--success-200: #9BF8D1;
+--success-300: #68ECBC;
+--success-400: #41D9A2;
+--success-500: #0DC180;
+--success-600: #09A576;
+--success-700: #068A5A;
+--success-800: #046F48;
+--success-900: #025C3C;
+
+--warning-DEFAULT: #FFC832;
+--warning-50: #fefbf2;
+--warning-100: #FFF8D6;
+--warning-200: #FFEFAD;
+--warning-300: #FFE483;
+--warning-400: #FFDA65;
+--warning-500: #FFC832;
+--warning-600: #DBA524;
+--warning-700: #B78419;
+--warning-800: #93650F;
+--warning-900: #7A4F09;
+
+--danger-DEFAULT: #FF3F3F;
+--danger-50: #fef5f5;
+--danger-100: #FFD8D8;
+--danger-200: #FFB2B2;
+--danger-300: #FF8B8B;
+--danger-400: #FF6F6F;
+--danger-500: #FF3F3F;
+--danger-600: #DB2E2E;
+--danger-700: #B71F1F;
+--danger-800: #931414;
+--danger-900: #7A0C0C;
+
+/* Neutrals */
+--black-DEFAULT: #080817;
+--black-100: #FFFFFF;
+--black-200: #E6E6EA;
+--black-300: #BCBCC0;
+--black-400: #7E7E82;
+--black-500: #2E2E30;
+--black-600: #212129;
+--black-700: #171722;
+--black-800: #0E0E1B;
+--black-900: #080817;
+
+--baseLight-500: #191919;
+--neutral-50: #ffffff;
+--neutral-100: #fafafa;
+
+/* Accent / assessment & OJT tags */
+--accent-teal: #11C7BC;
+--accent-paleBlue: #B5D2FF;
+--accent-fscourse: #FF63A8;
+--accent-blueViolet-50: #EDE7F6;
+--accent-blueViolet-500: #472CDD;
+--accent-burntOrange-500: #DB7725;
+--accent-forestGreen-50: #E8F5E9;
+--accent-forestGreen-500: #3B6D11;
+--accent-vividGreen-50: #E5F6EA;
+--accent-vividGreen-500: #00B35A;
+--info-50: #F4FBFF;
+--info-500: #3C9FFC;
+--info-600: #3388EC;
+--info-700: #0F8EFF;
+
+/* Semantic — core.semantic */
+--semantic-primary: #842CDD;
+--semantic-primary-hover: #6C1CCD;
+--semantic-primary-border: #7A27D6;
+--semantic-primary-selectedBg: #DBC5F5;
+--semantic-primary-foreground: #ffffff;
+--semantic-background: #ffffff;
+--semantic-foreground: #0a0f18;
+```
+
+#### App-specific colors
+
+```css
+/* fsContentPanel */
+--classroom: #C4A9FF;
+--embledlink: #FFE088;
+--body: #161c27;
+--fsSubCategory: #FC3287;
+--lbody: #E8EAEC;
+--lgreen: #97C711;
+--limeGreen: #B1D941;
+--paleMint: #D1FFE9;
+--slateGray: #4C525F;
+--nearBlack: #181717;
+--terracotta: #D45454;
+--oliveYellow: #C5C500;
+
+/* fsBizPanel */
+--classroom: #C4A9FF;
+--classroomOnsite: #0fa73a4d;
+--classroomOnline: #edb50066;
+--tagClassroomOnline: #3D67FD;
+--tagClassroomOnSite: #ED8F0A;
+--learningPath: #93C4FF;
+--information: #1A74A8;
+--body: #161c27;
+--sub-table: #05080C;
+--ci-1: #0A0F18;
+--embledlink: #FFE088;
+--brightRed: #FF3C3C;
+--deepIndigo: #2B0BA9;
+--lavender: #977DFF;
+
+/* fsAssessmentPanel */
+--lightBG-100: #F9F9FE;
+--setting-100: #FCF9FF;
+```
+
 #### CSS custom properties required by the preset
 
-Some preset values use `color-mix()` with CSS variables. Define these in your global CSS (e.g. `:root` or a theme provider) before relying on `mainBrand`, `secondaryBrand`, `basicBase`, `assessment`, or `ojt` utilities:
+Some preset values use `color-mix()` / `var(--color-*)`. Define these in your global CSS (e.g. `:root` or a theme provider) before relying on `colorsSemantic` utilities. Recommended hex values map from the raw scales above (`primary` ← `purple`):
 
 ```css
 :root {
-  --color-primary-500: #842CDD;
+  /* primary scale (theme-switchable) — map from purple */
+  --color-primary-50: #F1E7FB;
+  --color-primary-100: #DBC5F5;
+  --color-primary-200: #C39EEF;
   --color-primary-300: #AB74E9;
+  --color-primary-400: #9852E3;
+  --color-primary-500: #842CDD;
+  --color-primary-600: #7A27D6;
+  --color-primary-700: #6C1CCD;
+  --color-primary-800: #5E13C7;
+  --color-primary-900: #4900B9;
+
   --color-deepPink-500: #FF1A8F;
-  --color-deepPink-300: #ff6bae;
+  --color-baseLight-500: #191919;
   --color-neutral-50: #ffffff;
+
+  --color-red-500: #ff3733;
+  --color-yellow-500: #edb500;
+  --color-green-500: #00b35A;
+
   --color-blueViolet-500: #472CDD;
   --color-burntOrange-500: #DB7725;
-  --color-forestGreen-50: #E8F5E9;
   --color-forestGreen-500: #3B6D11;
-  --color-vividGreen-50: #E5F6EA;
   --color-vividGreen-500: #00B35A;
-  --color-info-50: #F4FBFF;
   --color-info-500: #3C9FFC;
 }
 ```
 
-Raw hex scales (`purple`, `green`, `neutral`, …) work without these variables.
+Raw hex scales (`purple`, `green`, `neutral`, …) work as Tailwind colors without these variables. `primary-*` utilities resolve to `var(--color-primary-*)` and need the block above.
 
 ### Which layer should I use?
 
