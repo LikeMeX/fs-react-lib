@@ -104,6 +104,8 @@ export interface AssistantPanelProps {
     userMember?: AssistantUserMember;
     /** Override entitlement check. */
     canUse?: boolean;
+    /** Navbar UserCog + “แก้ไขโปรไฟล์ผู้เรียน”. Default true (B2C). Hosts set false for B2B. */
+    showLearnerProfile?: boolean;
     /** Called when sending a message; return current player time in seconds (watch only). */
     getVideoTimestamp?: () => number;
     learningPathId?: string | number | null;
@@ -174,6 +176,7 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
     modes,
     userMember,
     canUse,
+    showLearnerProfile = true,
     getVideoTimestamp,
     learningPathId,
     learningPathName,
@@ -817,16 +820,18 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
                                 <LuMessageSquarePlus size={20} aria-hidden />
                             </button>
                         </Tooltip>
-                        <Tooltip title={profileEditOpen ? 'กลับไปสนทนา' : 'แก้ไขโปรไฟล์ผู้เรียน'}>
-                            <button
-                                type="button"
-                                aria-label={profileEditOpen ? 'กลับไปสนทนา' : 'แก้ไขโปรไฟล์ผู้เรียน'}
-                                onClick={profileEditOpen ? cancelProfileEdit : openProfileMenu}
-                                disabled={profileEditOpen ? false : !canOpenProfileMenu}
-                                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-white/90 transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaryFS-400 disabled:opacity-40">
-                                <LuUserCog size={20} aria-hidden />
-                            </button>
-                        </Tooltip>
+                        {showLearnerProfile && (
+                            <Tooltip title={profileEditOpen ? 'กลับไปสนทนา' : 'แก้ไขโปรไฟล์ผู้เรียน'}>
+                                <button
+                                    type="button"
+                                    aria-label={profileEditOpen ? 'กลับไปสนทนา' : 'แก้ไขโปรไฟล์ผู้เรียน'}
+                                    onClick={profileEditOpen ? cancelProfileEdit : openProfileMenu}
+                                    disabled={profileEditOpen ? false : !canOpenProfileMenu}
+                                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-white/90 transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaryFS-400 disabled:opacity-40">
+                                    <LuUserCog size={20} aria-hidden />
+                                </button>
+                            </Tooltip>
+                        )}
                         <Tooltip title={fullPage ? 'โหมดแผงข้าง' : 'โหมดเต็มหน้าจอ'}>
                             <button
                                 type="button"

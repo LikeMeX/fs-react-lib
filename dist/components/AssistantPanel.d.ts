@@ -15,6 +15,8 @@ export interface AssistantPanelProps {
     userMember?: AssistantUserMember;
     /** Override entitlement check. */
     canUse?: boolean;
+    /** Navbar UserCog + “แก้ไขโปรไฟล์ผู้เรียน”. Default true (B2C). Hosts set false for B2B. */
+    showLearnerProfile?: boolean;
     /** Called when sending a message; return current player time in seconds (watch only). */
     getVideoTimestamp?: () => number;
     learningPathId?: string | number | null;
