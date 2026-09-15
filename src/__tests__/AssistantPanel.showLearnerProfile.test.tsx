@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { AssistantContextProvider } from '../contexts/assistantContext';
 import { AssistantPanel } from '../components/AssistantPanel';
+import { writeAssistantUserProfile } from '../helpers/assistantUserProfile';
 
 jest.mock('react-markdown', () => ({
     __esModule: true,
@@ -57,15 +58,35 @@ describe('AssistantPanel showLearnerProfile', () => {
         process.env.NEXT_PUBLIC_SKILLPASS_ONBOARDING = prevSkillpass;
     });
 
-    it('shows the learner profile navbar control by default', () => {
+    it('shows the learner profile navbar control once a complete profile exists', () => {
+        writeAssistantUserProfile({
+            current_job: 'นักพัฒนา',
+            target_job: 'สถาปนิกระบบ',
+            industry: 'เทคโนโลยี',
+            timeframe: '1 ปี',
+        });
         renderPanel();
-        expect(screen.getByLabelText(PROFILE_LABEL)).toBeInTheDocument();
+        expect(screen.getByLabelText(PROFILE_LABEL)).toBeEnabled();
+        expect(screen.getByLabelText(HISTORY_LABEL)).toBeInTheDocument();
+        expect(screen.getByLabelText(NEW_CHAT_LABEL)).toBeInTheDocument();
+        expect(screen.getByLabelText(CLOSE_LABEL)).toBeInTheDocument();
+    });
+
+    it('hides the learner profile navbar control while the profile is unavailable', () => {
+        renderPanel();
+        expect(screen.queryByLabelText(PROFILE_LABEL)).not.toBeInTheDocument();
         expect(screen.getByLabelText(HISTORY_LABEL)).toBeInTheDocument();
         expect(screen.getByLabelText(NEW_CHAT_LABEL)).toBeInTheDocument();
         expect(screen.getByLabelText(CLOSE_LABEL)).toBeInTheDocument();
     });
 
     it('hides the learner profile navbar control when showLearnerProfile is false', () => {
+        writeAssistantUserProfile({
+            current_job: 'นักพัฒนา',
+            target_job: 'สถาปนิกระบบ',
+            industry: 'เทคโนโลยี',
+            timeframe: '1 ปี',
+        });
         renderPanel({ showLearnerProfile: false });
         expect(screen.queryByLabelText(PROFILE_LABEL)).not.toBeInTheDocument();
         expect(screen.getByLabelText(HISTORY_LABEL)).toBeInTheDocument();
