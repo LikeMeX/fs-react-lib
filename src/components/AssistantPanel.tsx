@@ -368,6 +368,8 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
         (skillpassOn
             ? ensureReady && !!fsAiUserId && (hasSavedProfile || onboardingComplete)
             : profileComplete);
+    /** Navbar control is hidden — not disabled — while the profile menu cannot be opened. */
+    const showProfileControl = showLearnerProfile && (profileEditOpen || canOpenProfileMenu);
     const currentProfileStep: ProfileStep | null =
         inProfileChat && profileStepIdx < PROFILE_STEPS.length ? PROFILE_STEPS[profileStepIdx] : null;
 
@@ -820,14 +822,13 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
                                 <LuMessageSquarePlus size={20} aria-hidden />
                             </button>
                         </Tooltip>
-                        {showLearnerProfile && (
+                        {showProfileControl && (
                             <Tooltip title={profileEditOpen ? 'กลับไปสนทนา' : 'แก้ไขโปรไฟล์ผู้เรียน'}>
                                 <button
                                     type="button"
                                     aria-label={profileEditOpen ? 'กลับไปสนทนา' : 'แก้ไขโปรไฟล์ผู้เรียน'}
                                     onClick={profileEditOpen ? cancelProfileEdit : openProfileMenu}
-                                    disabled={profileEditOpen ? false : !canOpenProfileMenu}
-                                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-white/90 transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaryFS-400 disabled:opacity-40">
+                                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-white/90 transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaryFS-400">
                                     <LuUserCog size={20} aria-hidden />
                                 </button>
                             </Tooltip>
