@@ -160,6 +160,16 @@ const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapte
         overrideMode: selectedMode,
     });
     const { messages, setMessages, suggestedActions, streaming, error: streamError, send, reset } = (0, useAssistantStream_1.useAssistantStream)();
+    /**
+     * Single-mode surfaces get their mode from the host (e.g. during_class -> after_class once a
+     * lesson is finished). The panel is not remounted on that change, so mirror it here. Multi-mode
+     * surfaces are left alone: there the value is the learner's own ModePicker choice.
+     */
+    (0, react_1.useEffect)(() => {
+        if (!singleMode)
+            return;
+        setSelectedMode((prev) => (prev === initialMode ? prev : initialMode));
+    }, [singleMode, initialMode]);
     (0, react_1.useEffect)(() => {
         setFullPage((0, assistantConversationHistory_1.readAssistantFullPagePreference)());
         if (!skillpassOn) {
