@@ -279,6 +279,16 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
 
     const { messages, setMessages, suggestedActions, streaming, error: streamError, send, reset } = useAssistantStream();
 
+    /**
+     * Single-mode surfaces get their mode from the host (e.g. during_class -> after_class once a
+     * lesson is finished). The panel is not remounted on that change, so mirror it here. Multi-mode
+     * surfaces are left alone: there the value is the learner's own ModePicker choice.
+     */
+    useEffect(() => {
+        if (!singleMode) return;
+        setSelectedMode((prev) => (prev === initialMode ? prev : initialMode));
+    }, [singleMode, initialMode]);
+
     useEffect(() => {
         setFullPage(readAssistantFullPagePreference());
         if (!skillpassOn) {
