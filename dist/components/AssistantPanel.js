@@ -88,7 +88,7 @@ function initialModeFor(surface, modes) {
         return 'general';
     return modes[0] ?? 'general';
 }
-const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapterId, lessonComplete = false, courseComplete = false, modes, userMember, canUse, showLearnerProfile = true, getVideoTimestamp, learningPathId, learningPathName, additionalContext, }) => {
+const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapterId, lessonComplete = false, courseComplete = false, modes, userMember, canUse, collectLearnerProfile: collectLearnerProfileProp, showLearnerProfile, getVideoTimestamp, learningPathId, learningPathName, additionalContext, }) => {
     const { open, setOpen } = (0, assistantContext_1.useAssistant)();
     const compactViewport = (0, useCompactAssistantViewport_1.useCompactAssistantViewport)();
     const allowedModes = modes && modes.length ? modes : DEFAULT_MODES;
@@ -112,6 +112,7 @@ const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapte
     const [profileDraft, setProfileDraft] = (0, react_1.useState)({});
     const [profileStepIdx, setProfileStepIdx] = (0, react_1.useState)(0);
     const skillpassOn = (0, oauthUserEnsure_1.isSkillpassOnboardingEnabled)();
+    const collectLearnerProfile = collectLearnerProfileProp ?? showLearnerProfile ?? true;
     const [fsAiUserId, setFsAiUserId] = (0, react_1.useState)(null);
     const [ensureReady, setEnsureReady] = (0, react_1.useState)(!skillpassOn);
     const [ensureError, setEnsureError] = (0, react_1.useState)(null);
@@ -124,8 +125,9 @@ const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapte
     const configured = (0, canUseLearningAssistant_1.isFsAiApiConfigured)();
     const effectiveProfile = (0, react_1.useMemo)(() => userProfile ?? (0, assistantUserProfile_1.userProfileOutToAssistant)(serverUserProfile), [userProfile, serverUserProfile]);
     const hasSavedProfile = (0, assistantProfileDisplay_1.hasDisplayableAssistantProfile)(effectiveProfile);
-    const needsSkillpassOnboarding = skillpassOn && ensureReady && !!fsAiUserId && !onboardingComplete && !hasSavedProfile;
-    const inSkillpassOnboarding = needsSkillpassOnboarding || (skillpassOn && ensureReady && !!fsAiUserId && profileEditOpen);
+    const needsSkillpassOnboarding = collectLearnerProfile && skillpassOn && ensureReady && !!fsAiUserId && !onboardingComplete && !hasSavedProfile;
+    const inSkillpassOnboarding = needsSkillpassOnboarding ||
+        (collectLearnerProfile && skillpassOn && ensureReady && !!fsAiUserId && profileEditOpen);
     /** SkillPass needs fs-ai user id from ensure; without host userMember we still allow general chat. */
     const skillpassConversationReady = !skillpassOn ||
         !!fsAiUserId ||
@@ -253,14 +255,14 @@ const AssistantPanel = ({ surface = 'general', courseId = null, lessonId, chapte
     const profileComplete = skillpassOn
         ? onboardingComplete || hasSavedProfile
         : (0, assistantUserProfile_1.isAssistantUserProfileComplete)(userProfile);
-    const inLegacyProfileChat = !skillpassOn && profileLoaded && (!profileComplete || profileEditOpen);
+    const inLegacyProfileChat = collectLearnerProfile && !skillpassOn && profileLoaded && (!profileComplete || profileEditOpen);
     const inProfileChat = inLegacyProfileChat;
     const canOpenProfileMenu = profileLoaded &&
         (skillpassOn
             ? ensureReady && !!fsAiUserId && (hasSavedProfile || onboardingComplete)
             : profileComplete);
     /** Navbar control is hidden — not disabled — while the profile menu cannot be opened. */
-    const showProfileControl = showLearnerProfile && (profileEditOpen || canOpenProfileMenu);
+    const showProfileControl = collectLearnerProfile && (profileEditOpen || canOpenProfileMenu);
     const currentProfileStep = inProfileChat && profileStepIdx < PROFILE_STEPS.length ? PROFILE_STEPS[profileStepIdx] : null;
     const profileChatMessages = (0, react_1.useMemo)(() => {
         if (!inProfileChat)

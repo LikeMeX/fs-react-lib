@@ -104,7 +104,13 @@ export interface AssistantPanelProps {
     userMember?: AssistantUserMember;
     /** Override entitlement check. */
     canUse?: boolean;
-    /** Navbar UserCog + “แก้ไขโปรไฟล์ผู้เรียน”. Default true (B2C). Hosts set false for B2B. */
+    /**
+     * Whether this panel collects a Learner profile: Learner onboarding (SkillPass wizard or the
+     * legacy profile chat) and the navbar profile editor. Default true (B2C). B2B hosts set false.
+     * A saved profile is still used to tailor answers either way.
+     */
+    collectLearnerProfile?: boolean;
+    /** @deprecated Use `collectLearnerProfile`. `false` now also skips Learner onboarding. */
     showLearnerProfile?: boolean;
     /** Called when sending a message; return current player time in seconds (watch only). */
     getVideoTimestamp?: () => number;
@@ -176,7 +182,8 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
     modes,
     userMember,
     canUse,
-    showLearnerProfile = true,
+    collectLearnerProfile: collectLearnerProfileProp,
+    showLearnerProfile,
     getVideoTimestamp,
     learningPathId,
     learningPathName,
@@ -208,6 +215,7 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
     const [profileDraft, setProfileDraft] = useState<Partial<AssistantUserProfile>>({});
     const [profileStepIdx, setProfileStepIdx] = useState(0);
     const skillpassOn = isSkillpassOnboardingEnabled();
+    const collectLearnerProfile = collectLearnerProfileProp ?? showLearnerProfile ?? true;
     const [fsAiUserId, setFsAiUserId] = useState<string | null>(null);
     const [ensureReady, setEnsureReady] = useState(!skillpassOn);
     const [ensureError, setEnsureError] = useState<string | null>(null);
@@ -228,10 +236,11 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
     const hasSavedProfile = hasDisplayableAssistantProfile(effectiveProfile);
 
     const needsSkillpassOnboarding =
-        skillpassOn && ensureReady && !!fsAiUserId && !onboardingComplete && !hasSavedProfile;
+        collectLearnerProfile && skillpassOn && ensureReady && !!fsAiUserId && !onboardingComplete && !hasSavedProfile;
 
     const inSkillpassOnboarding =
-        needsSkillpassOnboarding || (skillpassOn && ensureReady && !!fsAiUserId && profileEditOpen);
+        needsSkillpassOnboarding ||
+        (collectLearnerProfile && skillpassOn && ensureReady && !!fsAiUserId && profileEditOpen);
 
     /** SkillPass needs fs-ai user id from ensure; without host userMember we still allow general chat. */
     const skillpassConversationReady =
@@ -370,7 +379,7 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
         ? onboardingComplete || hasSavedProfile
         : isAssistantUserProfileComplete(userProfile);
     const inLegacyProfileChat =
-        !skillpassOn && profileLoaded && (!profileComplete || profileEditOpen);
+        collectLearnerProfile && !skillpassOn && profileLoaded && (!profileComplete || profileEditOpen);
     const inProfileChat = inLegacyProfileChat;
 
     const canOpenProfileMenu =
@@ -379,7 +388,7 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
             ? ensureReady && !!fsAiUserId && (hasSavedProfile || onboardingComplete)
             : profileComplete);
     /** Navbar control is hidden — not disabled — while the profile menu cannot be opened. */
-    const showProfileControl = showLearnerProfile && (profileEditOpen || canOpenProfileMenu);
+    const showProfileControl = collectLearnerProfile && (profileEditOpen || canOpenProfileMenu);
     const currentProfileStep: ProfileStep | null =
         inProfileChat && profileStepIdx < PROFILE_STEPS.length ? PROFILE_STEPS[profileStepIdx] : null;
 
