@@ -15,7 +15,13 @@ export interface AssistantPanelProps {
     userMember?: AssistantUserMember;
     /** Override entitlement check. */
     canUse?: boolean;
-    /** Navbar UserCog + “แก้ไขโปรไฟล์ผู้เรียน”. Default true (B2C). Hosts set false for B2B. */
+    /**
+     * Whether this panel collects a Learner profile: Learner onboarding (SkillPass wizard or the
+     * legacy profile chat) and the navbar profile editor. Default true (B2C). B2B hosts set false.
+     * A saved profile is still used to tailor answers either way.
+     */
+    collectLearnerProfile?: boolean;
+    /** @deprecated Use `collectLearnerProfile`. `false` now also skips Learner onboarding. */
     showLearnerProfile?: boolean;
     /** Called when sending a message; return current player time in seconds (watch only). */
     getVideoTimestamp?: () => number;
