@@ -4,7 +4,7 @@ export { AssistantNavButton } from './AssistantNavButton';
 export type { AssistantNavButtonProps } from './AssistantNavButton';
 export { LearningAssistantShell } from './LearningAssistantShell';
 export type { LearningAssistantShellProps } from './LearningAssistantShell';
-export { SuggestedActions, SUGGESTED_ACTIONS_BY_MODE } from './SuggestedActions';
+export { SuggestedActions, SUGGESTED_ACTIONS_BY_MODE, resolveSuggestedActions } from './SuggestedActions';
 export { MessageBubble } from './MessageBubble';
 export { MessageList } from './MessageList';
 export { Composer } from './Composer';
