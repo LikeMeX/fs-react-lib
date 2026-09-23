@@ -78,6 +78,7 @@ import {
     AssistantMessage,
     AssistantUserMember,
     LearningModeApi,
+    SuggestedAction,
 } from '../types/learningAssistant';
 import { onboardingApi, UserProfileOut } from '../services/onboardingApi';
 import { ASSISTANT_PANEL_WIDTH } from './constants';
@@ -117,6 +118,11 @@ export interface AssistantPanelProps {
     learningPathId?: string | number | null;
     learningPathName?: string | null;
     additionalContext?: Record<string, unknown> | null;
+    /**
+     * Chips for this page, shown for the whole conversation in place of the mode defaults and
+     * the chips the assistant returns. Omit to keep that default behaviour; `[]` hides chips.
+     */
+    suggestedActions?: readonly SuggestedAction[];
 }
 
 function previewTitle(text: string, max = 72): string {
@@ -188,6 +194,7 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
     learningPathId,
     learningPathName,
     additionalContext,
+    suggestedActions: pinnedSuggestedActions,
 }) => {
     const { open, setOpen } = useAssistant();
     const compactViewport = useCompactAssistantViewport();
@@ -930,6 +937,7 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
                                 <SuggestedActions
                                     mode={apiMode}
                                     actions={suggestedActions}
+                                    pinned={pinnedSuggestedActions}
                                     disabled={streaming || !chatInputReady || isCreatingConversation}
                                     onSelect={(message, actionIntent) => {
                                         void handleSend(message, actionIntent);
