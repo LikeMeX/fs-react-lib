@@ -1,11 +1,16 @@
 import React from 'react';
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { AssistantContextProvider } from '../contexts/assistantContext';
 import { AssistantPanel } from '../components/AssistantPanel';
-import { SUGGESTED_ACTIONS_BY_MODE, resolveSuggestedActions } from '../components/SuggestedActions';
+import {
+    SUGGESTED_ACTIONS_BY_MODE,
+    SuggestedActions,
+    resolveSuggestedActions,
+} from '../components/SuggestedActions';
+import { useAssistantPhase } from '../hooks/useAssistantPhase';
 import { useAssistantStream } from '../hooks/useAssistantStream';
-import type { SuggestedAction } from '../types/learningAssistant';
+import type { AssistantMessage, LearningModeApi, SuggestedAction } from '../types/learningAssistant';
 
 jest.mock('react-markdown', () => ({
     __esModule: true,
@@ -24,6 +29,8 @@ jest.mock('../hooks/useAssistantStream', () => ({
 }));
 
 const streamMock = useAssistantStream as unknown as jest.Mock;
+const phaseMock = useAssistantPhase as unknown as jest.Mock;
+const DURING_PHASE = { phase: 'during', apiMode: 'during_class', lastError: null };
 
 const PAGE: SuggestedAction[] = [
     { action_intent: 'concept_translator', label_th: 'อธิบายเนื้อหานี้' },
@@ -31,9 +38,9 @@ const PAGE: SuggestedAction[] = [
 ];
 const FROM_STREAM: SuggestedAction[] = [{ action_intent: 'quiz_me', label_th: 'ข้อสอบ + เฉลย' }];
 
-function mockStream(suggestedActions: SuggestedAction[]) {
+function mockStream(suggestedActions: SuggestedAction[], messages: AssistantMessage[] = []) {
     streamMock.mockReturnValue({
-        messages: [],
+        messages,
         setMessages: jest.fn(),
         suggestedActions,
         streaming: false,
@@ -52,7 +59,7 @@ function chipLabels(): string[] {
         .map(el => el.textContent ?? '');
 }
 
-function renderPanel(suggestedActions?: SuggestedAction[]) {
+function renderPanel(suggestedActions?: SuggestedAction[], modes: LearningModeApi[] = ['during_class']) {
     return render(
         <AssistantContextProvider>
             <AssistantPanel
@@ -60,7 +67,7 @@ function renderPanel(suggestedActions?: SuggestedAction[]) {
                 surface="watch"
                 courseId={1}
                 lessonId={1}
-                modes={['during_class']}
+                modes={modes}
                 collectLearnerProfile={false}
                 suggestedActions={suggestedActions}
             />
@@ -108,6 +115,7 @@ describe('AssistantPanel suggestedActions prop', () => {
         process.env.NEXT_PUBLIC_FS_AI_USE_PROXY = 'true';
         process.env.NEXT_PUBLIC_SKILLPASS_ONBOARDING = 'false';
         window.localStorage.clear();
+        phaseMock.mockReturnValue(DURING_PHASE);
     });
 
     afterEach(() => {
@@ -120,6 +128,43 @@ describe('AssistantPanel suggestedActions prop', () => {
         renderPanel(PAGE);
 
         expect(chipLabels()).toEqual(['อธิบายเนื้อหานี้', 'สรุปบทเรียน']);
+    });
+
+    it('keeps the page chips once the conversation has messages', () => {
+        mockStream(FROM_STREAM, [
+            { id: 'u1', role: 'user', content: 'อธิบายเนื้อหานี้' },
+            { id: 'a1', role: 'assistant', content: 'คำอธิบาย' },
+        ]);
+        renderPanel(PAGE);
+
+        expect(screen.getByText('คำอธิบาย')).toBeInTheDocument();
+        expect(chipLabels()).toEqual(['อธิบายเนื้อหานี้', 'สรุปบทเรียน']);
+    });
+
+    it('keeps the page chips when the host switches to after_class', () => {
+        mockStream(FROM_STREAM);
+        const { rerender } = renderPanel(PAGE);
+
+        phaseMock.mockReturnValue({ phase: 'after', apiMode: 'after_class', lastError: null });
+        rerender(
+            <AssistantContextProvider>
+                <AssistantPanel
+                    canUse
+                    surface="watch"
+                    courseId={1}
+                    lessonId={1}
+                    modes={['after_class']}
+                    collectLearnerProfile={false}
+                    suggestedActions={PAGE}
+                />
+            </AssistantContextProvider>
+        );
+
+        expect(phaseMock.mock.calls[phaseMock.mock.calls.length - 1][0].overrideMode).toBe('after_class');
+        expect(chipLabels()).toEqual(['อธิบายเนื้อหานี้', 'สรุปบทเรียน']);
+        expect(chipLabels()).not.toEqual(
+            SUGGESTED_ACTIONS_BY_MODE.after_class.map(a => a.label_th)
+        );
     });
 
     it('hides the chips when the page pins an empty set', () => {
@@ -138,5 +183,43 @@ describe('AssistantPanel suggestedActions prop', () => {
         mockStream(FROM_STREAM);
         renderPanel();
         expect(chipLabels()).toEqual(['ข้อสอบ + เฉลย']);
+    });
+});
+
+describe('SuggestedActions chip click', () => {
+    const PINNED: SuggestedAction[] = [
+        { action_intent: 'assignment_overview', label_th: 'สรุปหลักสูตรที่ได้รับมอบหมาย' },
+        { action_intent: 'summary_maker', label_th: 'สรุป', prompt: 'ช่วยสรุป key takeaways' },
+    ];
+
+    function renderChips(onSelect: jest.Mock) {
+        render(
+            <SuggestedActions mode="general" actions={FROM_STREAM} pinned={PINNED} onSelect={onSelect} />
+        );
+    }
+
+    it('sends a pinned chip with its label as the message and its own action_intent', () => {
+        const onSelect = jest.fn();
+        renderChips(onSelect);
+
+        fireEvent.click(screen.getByRole('listitem', { name: 'สรุปหลักสูตรที่ได้รับมอบหมาย' }));
+
+        expect(onSelect).toHaveBeenCalledTimes(1);
+        expect(onSelect).toHaveBeenCalledWith('สรุปหลักสูตรที่ได้รับมอบหมาย', 'assignment_overview');
+    });
+
+    it('sends the prompt instead of the label when a pinned chip has one', () => {
+        const onSelect = jest.fn();
+        renderChips(onSelect);
+
+        fireEvent.click(screen.getByRole('listitem', { name: 'สรุป' }));
+
+        expect(onSelect).toHaveBeenCalledWith('ช่วยสรุป key takeaways', 'summary_maker');
+    });
+
+    it('never offers the stream chips while a pinned set is shown', () => {
+        renderChips(jest.fn());
+
+        expect(screen.queryByRole('listitem', { name: 'ข้อสอบ + เฉลย' })).toBeNull();
     });
 });
