@@ -122,6 +122,13 @@ describe('AssistantPanel suggestedActions prop', () => {
         expect(chipLabels()).toEqual(['อธิบายเนื้อหานี้', 'สรุปบทเรียน']);
     });
 
+    it('hides the chips when the page pins an empty set', () => {
+        mockStream(FROM_STREAM);
+        renderPanel([]);
+
+        expect(screen.queryByRole('list', { name: 'ข้อความแนะนำ', hidden: true })).toBeNull();
+    });
+
     it('keeps the current behaviour when the prop is omitted', () => {
         mockStream([]);
         const { unmount } = renderPanel();
