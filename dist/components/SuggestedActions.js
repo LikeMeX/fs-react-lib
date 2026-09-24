@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SuggestedActions = exports.SUGGESTED_ACTIONS_BY_MODE = void 0;
+exports.resolveSuggestedActions = resolveSuggestedActions;
 const jsx_runtime_1 = require("react/jsx-runtime");
 /** Default chips per FS AI learning mode: stable action_intent + Thai label + user message prompt. */
 exports.SUGGESTED_ACTIONS_BY_MODE = {
@@ -115,11 +116,22 @@ exports.SUGGESTED_ACTIONS_BY_MODE = {
         },
     ],
 };
+/**
+ * Chips to show. A host-pinned set always wins, so a page keeps its own chips for the whole
+ * conversation (`[]` hides them). Unpinned, the stream's chips replace the mode defaults.
+ */
+function resolveSuggestedActions(mode, fromStream, pinned) {
+    if (pinned)
+        return pinned;
+    if (fromStream.length > 0)
+        return fromStream;
+    return exports.SUGGESTED_ACTIONS_BY_MODE[mode] ?? [];
+}
 function messageForAction(a) {
     return (a.prompt ?? a.label_th ?? a.label ?? a.action_intent).trim();
 }
-const SuggestedActions = ({ mode, actions, disabled, onSelect }) => {
-    const list = actions.length > 0 ? actions : exports.SUGGESTED_ACTIONS_BY_MODE[mode] ?? [];
+const SuggestedActions = ({ mode, actions, pinned, disabled, onSelect }) => {
+    const list = resolveSuggestedActions(mode, actions, pinned);
     if (!list.length)
         return null;
     return ((0, jsx_runtime_1.jsx)("div", { "aria-live": "polite", className: "mt-2", children: (0, jsx_runtime_1.jsx)("div", { role: "list", "aria-label": "\u0E02\u0E49\u0E2D\u0E04\u0E27\u0E32\u0E21\u0E41\u0E19\u0E30\u0E19\u0E33", className: "-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-0.5 [scrollbar-width:thin] [scrollbar-color:rgba(126,126,130,0.35)_transparent] [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-blackFS-500/80", children: list.map((a, i) => {

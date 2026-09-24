@@ -1,5 +1,5 @@
 import { AssistantSurface } from '../helpers/assistantConversationHistory';
-import { AssistantUserMember, LearningModeApi } from '../types/learningAssistant';
+import { AssistantUserMember, LearningModeApi, SuggestedAction } from '../types/learningAssistant';
 import React from 'react';
 export interface AssistantPanelProps {
     /** 'general' = no course context. 'enroll'/'watch' for course-bound flows. */
@@ -28,5 +28,10 @@ export interface AssistantPanelProps {
     learningPathId?: string | number | null;
     learningPathName?: string | null;
     additionalContext?: Record<string, unknown> | null;
+    /**
+     * Chips for this page, shown for the whole conversation in place of the mode defaults and
+     * the chips the assistant returns. Omit to keep that default behaviour; `[]` hides chips.
+     */
+    suggestedActions?: readonly SuggestedAction[];
 }
 export declare const AssistantPanel: React.FC<AssistantPanelProps>;
