@@ -24,6 +24,7 @@ const UNSPECIFIED = 'unspecified';
 /** Backend enum (FS AI). Unknown values are coerced to `free_chat` to avoid 422. */
 const ALLOWED_ACTION_INTENTS = new Set<string>([
     'road_map_maker',
+    'assignment_overview',
     'pre_read_primer',
     'question_starter',
     'skill_gap_scan',

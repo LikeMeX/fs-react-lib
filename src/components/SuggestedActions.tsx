@@ -115,9 +115,25 @@ export const SUGGESTED_ACTIONS_BY_MODE: Record<LearningModeApi, SuggestedAction[
     ],
 };
 
+/**
+ * Chips to show. A host-pinned set always wins, so a page keeps its own chips for the whole
+ * conversation (`[]` hides them). Unpinned, the stream's chips replace the mode defaults.
+ */
+export function resolveSuggestedActions(
+    mode: LearningModeApi,
+    fromStream: readonly SuggestedAction[],
+    pinned?: readonly SuggestedAction[]
+): readonly SuggestedAction[] {
+    if (pinned) return pinned;
+    if (fromStream.length > 0) return fromStream;
+    return SUGGESTED_ACTIONS_BY_MODE[mode] ?? [];
+}
+
 export interface SuggestedActionsProps {
     mode: LearningModeApi;
-    actions: SuggestedAction[];
+    actions: readonly SuggestedAction[];
+    /** Host-pinned chips; see `resolveSuggestedActions`. */
+    pinned?: readonly SuggestedAction[];
     disabled?: boolean;
     /** First arg is the message sent to the assistant; second is metadata action_intent. */
     onSelect: (message: string, actionIntent: string) => void;
@@ -127,8 +143,8 @@ function messageForAction(a: SuggestedAction): string {
     return (a.prompt ?? a.label_th ?? a.label ?? a.action_intent).trim();
 }
 
-export const SuggestedActions: React.FC<SuggestedActionsProps> = ({ mode, actions, disabled, onSelect }) => {
-    const list = actions.length > 0 ? actions : SUGGESTED_ACTIONS_BY_MODE[mode] ?? [];
+export const SuggestedActions: React.FC<SuggestedActionsProps> = ({ mode, actions, pinned, disabled, onSelect }) => {
+    const list = resolveSuggestedActions(mode, actions, pinned);
 
     if (!list.length) return null;
 
