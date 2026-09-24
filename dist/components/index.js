@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.RadarChart = exports.ASSISTANT_PANEL_WIDTH_FULL_VW = exports.ASSISTANT_PANEL_WIDTH = exports.WelcomeMessage = exports.ModePicker = exports.Composer = exports.MessageList = exports.MessageBubble = exports.resolveSuggestedActions = exports.SUGGESTED_ACTIONS_BY_MODE = exports.SuggestedActions = exports.LearningAssistantShell = exports.AssistantNavButton = exports.AssistantPanel = void 0;
+exports.RadarChart = exports.ASSISTANT_PANEL_WIDTH_FULL_VW = exports.ASSISTANT_PANEL_WIDTH = exports.WelcomeMessage = exports.ModePicker = exports.Composer = exports.MessageList = exports.MessageBubble = exports.SUGGESTED_ACTIONS_BY_MODE = exports.SuggestedActions = exports.LearningAssistantShell = exports.AssistantNavButton = exports.AssistantPanel = void 0;
 var AssistantPanel_1 = require("./AssistantPanel");
 Object.defineProperty(exports, "AssistantPanel", { enumerable: true, get: function () { return AssistantPanel_1.AssistantPanel; } });
 var AssistantNavButton_1 = require("./AssistantNavButton");
@@ -10,7 +10,6 @@ Object.defineProperty(exports, "LearningAssistantShell", { enumerable: true, get
 var SuggestedActions_1 = require("./SuggestedActions");
 Object.defineProperty(exports, "SuggestedActions", { enumerable: true, get: function () { return SuggestedActions_1.SuggestedActions; } });
 Object.defineProperty(exports, "SUGGESTED_ACTIONS_BY_MODE", { enumerable: true, get: function () { return SuggestedActions_1.SUGGESTED_ACTIONS_BY_MODE; } });
-Object.defineProperty(exports, "resolveSuggestedActions", { enumerable: true, get: function () { return SuggestedActions_1.resolveSuggestedActions; } });
 var MessageBubble_1 = require("./MessageBubble");
 Object.defineProperty(exports, "MessageBubble", { enumerable: true, get: function () { return MessageBubble_1.MessageBubble; } });
 var MessageList_1 = require("./MessageList");
