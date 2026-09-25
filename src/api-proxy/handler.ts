@@ -6,6 +6,25 @@ export interface CreateFsAiProxyHandlerOptions {
     upstreamUrl?: string;
     /** Server-only API key. Defaults to env FS_AI_X_API_KEY / FS_AI_API_KEY. */
     apiKey?: string;
+    /**
+     * Channel every request through this host belongs to. FS AI only recommends courses from that
+     * Channel's catalog. Omit on hosts that serve both Channels and pass it per request instead.
+     */
+    channel?: AssistantChannel;
+}
+
+/** The audience a session belongs to. See CONTEXT.md in fs-learn-app ("Channel"). */
+export type AssistantChannel = 'b2c' | 'b2b';
+
+/**
+ * Upstream header carrying the Channel. Only this proxy sets it: a browser-supplied value is
+ * never forwarded, so the Channel is always the server's decision.
+ */
+export const FS_AI_CHANNEL_HEADER = 'X-FS-Channel';
+
+export interface FsAiProxyRequestContext {
+    /** Channel decided server-side for this request; wins over the host-level `channel`. */
+    channel?: AssistantChannel;
 }
 
 function readBody(req: NextApiRequest): Promise<Buffer | undefined> {
@@ -39,7 +58,7 @@ function buildUpstreamQuery(req: NextApiRequest): string {
 }
 
 export function createFsAiProxyHandler(opts: CreateFsAiProxyHandlerOptions = {}) {
-    return async function handler(req: NextApiRequest, res: NextApiResponse) {
+    return async function handler(req: NextApiRequest, res: NextApiResponse, ctx: FsAiProxyRequestContext = {}) {
         if (req.method === 'OPTIONS') {
             res.status(204).end();
             return;
@@ -85,6 +104,10 @@ export function createFsAiProxyHandler(opts: CreateFsAiProxyHandlerOptions = {})
         const auth = req.headers.authorization;
         if (typeof auth === 'string' && auth.length) {
             headers.Authorization = auth;
+        }
+        const channel = ctx.channel ?? opts.channel;
+        if (channel) {
+            headers[FS_AI_CHANNEL_HEADER] = channel;
         }
         const ct = req.headers['content-type'];
         if (typeof ct === 'string') {
