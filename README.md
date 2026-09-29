@@ -35,7 +35,11 @@ Peer deps (install whichever your app uses):
 - `@tanstack/react-query` ^4
 - `react-icons` ^4 || ^5
 - `react-markdown` ^7 || ^8
-- `remark-gfm` ^3 || ^4
+- `remark-gfm` ^3
+- `remark-math` ^5
+- `rehype-katex` ^6
+
+The markdown plugins must stay on the unified 10 majors that `react-markdown` 7/8 runs on — `remark-gfm` 4, `remark-math` 6 and `rehype-katex` 7 target unified 11 and crash its parser on inline code, tables and `$$` blocks.
 
 ## Quick start (Next.js Pages Router)
 
