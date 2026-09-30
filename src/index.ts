@@ -59,6 +59,6 @@ export type { AssistantSource } from './helpers/filterAssistantSources';
 export { sanitizeAssistantMarkdown, visibleStripped, isOrphanListMarkerLine } from './helpers/sanitizeAssistantMarkdown';
 export * from './types/learningAssistant';
 export { createFsAiProxyHandler } from './api-proxy/handler';
-export { FS_AI_CHANNEL_HEADER } from './api-proxy/handler';
+export { FS_AI_CHANNEL_HEADER, FS_AI_ORGANIZATION_HEADER } from './api-proxy/handler';
 export type { AssistantChannel, CreateFsAiProxyHandlerOptions, FsAiProxyRequestContext } from './api-proxy/handler';
 export * from './i18n';
