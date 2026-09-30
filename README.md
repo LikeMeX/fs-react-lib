@@ -96,6 +96,23 @@ export const config = { api: { bodyParser: false, responseLimit: false as const 
 export default createFsAiProxyHandler();
 ```
 
+FS AI keeps its course recommendations to the session's catalog, which the proxy names with two upstream headers it sets itself (a browser can never set them through the proxy):
+
+- `X-FS-Channel` — `b2c` or `b2b`. Fix it for the whole host with `createFsAiProxyHandler({ channel: 'b2c' })`, or decide it per request.
+- `X-FS-Organization` — the business id of a B2B session. Sent only alongside `b2b`, and only when it is a positive integer.
+
+A host that serves B2B sessions decides both server-side, after its own entitlement check, and passes them per request:
+
+```ts
+const proxy = createFsAiProxyHandler();
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+    const access = await checkAccess(req); // your server-side gate; resolves the business id
+    if (!access.ok) return res.status(access.status).json({ error: access.error });
+    await proxy(req, res, { channel: 'b2b', businessId: access.businessId });
+}
+```
+
 ### 3. Tailwind tokens + content path
 
 `tailwind.config.js` (assistant widget only — see [Design tokens](#design-tokens) for the full FutureSkill palette):

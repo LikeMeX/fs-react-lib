@@ -22,10 +22,24 @@ export type AssistantChannel = 'b2c' | 'b2b';
  */
 export const FS_AI_CHANNEL_HEADER = 'X-FS-Channel';
 
+/**
+ * Upstream header naming the Organization (business) of a B2B session, so FS AI keeps to that
+ * Organization's catalog. Only this proxy sets it, and only alongside the `b2b` Channel: a
+ * browser-supplied value is never forwarded.
+ */
+export const FS_AI_ORGANIZATION_HEADER = 'X-FS-Organization';
+
 export interface FsAiProxyRequestContext {
     /** Channel decided server-side for this request; wins over the host-level `channel`. */
     channel?: AssistantChannel;
+    /**
+     * Business id the host's server-side gate resolved for this B2B request. Sent upstream only
+     * when the Channel is `b2b` and the id is a positive integer; otherwise left out.
+     */
+    businessId?: string | number;
 }
+
+const POSITIVE_INTEGER = /^[1-9][0-9]*$/;
 
 function readBody(req: NextApiRequest): Promise<Buffer | undefined> {
     const method = req.method || 'GET';
@@ -108,6 +122,10 @@ export function createFsAiProxyHandler(opts: CreateFsAiProxyHandlerOptions = {})
         const channel = ctx.channel ?? opts.channel;
         if (channel) {
             headers[FS_AI_CHANNEL_HEADER] = channel;
+        }
+        const businessId = ctx.businessId === undefined ? '' : String(ctx.businessId).trim();
+        if (channel === 'b2b' && POSITIVE_INTEGER.test(businessId)) {
+            headers[FS_AI_ORGANIZATION_HEADER] = businessId;
         }
         const ct = req.headers['content-type'];
         if (typeof ct === 'string') {
