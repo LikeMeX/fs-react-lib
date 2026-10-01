@@ -3,6 +3,7 @@ import { decodeSseDataPayload } from '../helpers/decodeFsAiSsePayload';
 import { filterDisplayableAssistantSources } from '../helpers/filterAssistantSources';
 import { AssistantMessage, StreamMetaPayload, SuggestedAction } from '../types/learningAssistant';
 import { fsAiApi } from '../services/fsAiApi';
+import { renewFsAiToken } from '../services/fsAiAuth';
 
 function processSseBlock(block: string, onEvent: (eventName: string, data: string) => void) {
     let eventName = 'message';
@@ -59,10 +60,19 @@ export function useAssistantStream() {
             setMessages(prev => [...prev, { id: assistantId, role: 'assistant', content: '' }]);
 
             const url = fsAiApi.streamMessagesUrl(conversationId);
-            const init = fsAiApi.buildStreamInit(conversationId, body);
+            //* Built per attempt: the init carries the token, which a renewal replaces.
+            const open = () => fetch(url, { ...fsAiApi.buildStreamInit(conversationId, body), signal: ac.signal });
             let response: Response;
             try {
-                response = await fetch(url, { ...init, signal: ac.signal });
+                response = await open();
+                //* Resending assumes a 401 means the message was not stored. Nothing here checks
+                //* that: it holds because both sources of a 401, the host proxy's gate and FS AI's
+                //* API-key check, refuse before the message handler runs. A 401 raised after
+                //* storing would duplicate the message.
+                if (response.status === 401 && (await renewFsAiToken())) {
+                    void response.body?.cancel();
+                    response = await open();
+                }
             } catch (e) {
                 setError((e as Error)?.message || 'Network error');
                 setStreaming(false);
