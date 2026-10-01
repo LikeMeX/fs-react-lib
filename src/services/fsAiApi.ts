@@ -1,5 +1,5 @@
 import axios, { AxiosInstance } from 'axios';
-import { configureOnboardingAuth } from './onboardingApi';
+import { authenticateFsAiClient, currentFsAiToken, FsAiAuthOptions, setFsAiAuth } from './fsAiAuth';
 import {
     ConversationListOut,
     ConversationOut,
@@ -9,11 +9,9 @@ import {
     SendStreamBody,
 } from '../types/learningAssistant';
 
-let tokenProvider: () => string | null | undefined = () => null;
-
-export function configureFsAi(opts: { getToken: () => string | null | undefined }): void {
-    tokenProvider = opts.getToken;
-    configureOnboardingAuth(opts);
+/** Wires the host's token, and optionally its session renewal, into every FS AI call. */
+export function configureFsAi(opts: FsAiAuthOptions): void {
+    setFsAiAuth(opts);
 }
 
 function isFsAiProxyEnabled(): boolean {
@@ -44,18 +42,12 @@ function apiV1Base(): string | null {
 function createClient(): AxiosInstance | null {
     const base = apiV1Base();
     if (!base) return null;
-    const client = axios.create({
-        baseURL: base,
-        timeout: 30000,
-    });
-    client.interceptors.request.use(config => {
-        const token = tokenProvider();
-        if (token && config.headers) {
-            (config.headers as Record<string, string>).Authorization = `Bearer ${token}`;
-        }
-        return config;
-    });
-    return client;
+    return authenticateFsAiClient(
+        axios.create({
+            baseURL: base,
+            timeout: 30000,
+        })
+    );
 }
 
 const client = () => createClient();
@@ -124,7 +116,7 @@ export const fsAiApi = {
     },
 
     buildStreamInit(_conversationId: string, body: SendStreamBody): RequestInit {
-        const token = tokenProvider() || '';
+        const token = currentFsAiToken() || '';
         return {
             method: 'POST',
             headers: {

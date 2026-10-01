@@ -10,7 +10,7 @@ Ships:
 - `<AssistantPanel>` — slide-in chat drawer (general or course-aware modes).
 - `<AssistantNavButton>` — toggle button (inline or floating FAB).
 - `<AssistantContextProvider>` + `useAssistant()` — panel open/close state, persisted to `localStorage`.
-- `configureFsAi({ getToken })` — wires host app auth into the FS AI Axios client.
+- `configureFsAi({ getToken, onUnauthorized? })` — wires host app auth into every FS AI call, and lets the host renew an expired session on a 401.
 - `createFsAiProxyHandler()` — Next.js API route factory that proxies `/api/fs-ai/**` to the upstream origin and injects the server-only `X-API-Key`.
 - Hooks: `useAssistantConversation`, `useAssistantPhase`, `useAssistantStream`.
 - Helpers: `buildLearningMetadata`, `canUseLearningAssistant`, `isFsAiApiConfigured`, conversation history store, user-profile store, SSE decoder, markdown sanitizer.
@@ -85,6 +85,21 @@ export default function MyApp({ Component, pageProps }) {
 }
 ```
 
+The assistant's calls use their own HTTP client, so a refresh interceptor on the host's Axios
+instance never sees their 401s. Pass `onUnauthorized` to renew the session the way the host
+already does:
+
+```ts
+configureFsAi({
+    getToken: () => auth.getToken() ?? null,
+    // Resolve true once getToken returns the renewed token, false if the session cannot be renewed.
+    onUnauthorized: async () => (await auth.renew()) !== null,
+});
+```
+
+On a 401 the library calls it once, shared by every call refused at the same time, and sends
+each refused call once more with the new token. Without it, the 401 reaches the panel as an error.
+
 ### 2. Add the proxy route
 
 `pages/api/fs-ai/[[...slug]].ts`:
@@ -94,6 +109,23 @@ import { createFsAiProxyHandler } from '@likemex/fs-react-lib';
 
 export const config = { api: { bodyParser: false, responseLimit: false as const } };
 export default createFsAiProxyHandler();
+```
+
+FS AI keeps its course recommendations to the session's catalog, which the proxy names with two upstream headers it sets itself (a browser can never set them through the proxy):
+
+- `X-FS-Channel` — `b2c` or `b2b`. Fix it for the whole host with `createFsAiProxyHandler({ channel: 'b2c' })`, or decide it per request.
+- `X-FS-Organization` — the business id of a B2B session. Sent only alongside `b2b`, and only when it is a positive integer.
+
+A host that serves B2B sessions decides both server-side, after its own entitlement check, and passes them per request:
+
+```ts
+const proxy = createFsAiProxyHandler();
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+    const access = await checkAccess(req); // your server-side gate; resolves the business id
+    if (!access.ok) return res.status(access.status).json({ error: access.error });
+    await proxy(req, res, { channel: 'b2b', businessId: access.businessId });
+}
 ```
 
 ### 3. Tailwind tokens + content path

@@ -1,6 +1,5 @@
 import axios, { AxiosInstance } from 'axios';
-
-let tokenProvider: () => string | null | undefined = () => null;
+import { authenticateFsAiClient } from './fsAiAuth';
 
 export interface StepOption {
     id: string;
@@ -81,20 +80,8 @@ function apiV1Base(): string | null {
 function createClient(): AxiosInstance | null {
     const base = apiV1Base();
     if (!base) return null;
-    const client = axios.create({ baseURL: base, timeout: 30000 });
-    client.interceptors.request.use(config => {
-        const token = tokenProvider();
-        if (token && config.headers) {
-            (config.headers as Record<string, string>).Authorization = `Bearer ${token}`;
-        }
-        return config;
-    });
-    return client;
-}
-
-/** Reuses the same token wiring as configureFsAi for onboarding/user profile routes. */
-export function configureOnboardingAuth(opts: { getToken: () => string | null | undefined }): void {
-    tokenProvider = opts.getToken;
+    //* Same token and renewal as `configureFsAi`: onboarding routes go through the same gate.
+    return authenticateFsAiClient(axios.create({ baseURL: base, timeout: 30000 }));
 }
 
 export const onboardingApi = {
