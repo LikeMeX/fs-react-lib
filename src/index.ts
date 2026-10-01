@@ -2,6 +2,7 @@ export * from './components';
 export { default as AssistantContextProvider, AssistantContext, useAssistant } from './contexts/assistantContext';
 export type { IAssistantContext } from './contexts/assistantContext';
 export { configureFsAi, fsAiApi } from './services/fsAiApi';
+export type { FsAiAuthOptions } from './services/fsAiAuth';
 export { useAssistantConversation } from './hooks/useAssistantConversation';
 export { useAssistantPhase } from './hooks/useAssistantPhase';
 export { useAssistantStream } from './hooks/useAssistantStream';
